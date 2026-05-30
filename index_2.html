@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КазДемеу</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+// Initialize Firebase immediately after SDK loads
+try {
+  var firebaseConfig = {
+    apiKey: "AIzaSyC_dDEir2Q7WTlCtQtLs_8ASVswfXJ9TAE",
+    authDomain: "project-6067921247510653278.firebaseapp.com",
+    databaseURL: "https://project-6067921247510653278-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "project-6067921247510653278",
+    storageBucket: "project-6067921247510653278.firebasestorage.app",
+    messagingSenderId: "852215549966",
+    appId: "1:852215549966:web:66efe7802316100207ec5f"
+  };
+  window._fbApp = firebase.initializeApp(firebaseConfig);
+  window._db = firebase.database();
+  console.log('Firebase OK');
+} catch(e){ console.warn('Firebase init error:', e.message); }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;margin:0;padding:0;font-family:'Inter',sans-serif;font-size:13px;color:#111827;background:#f1f5f9}
+
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;background:linear-gradient(135deg,#0f1923,#1a2d45,#0f3460);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px}
+.lcard{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:400px;margin:auto;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+.llogo{text-align:center;margin-bottom:24px}
+.llogo .li{width:56px;height:56px;background:#0f1923;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:10px}
+.llogo h1{font-size:20px;font-weight:700}
+.llogo p{color:#6b7280;font-size:12px;margin-top:3px}
+.rlist{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.ritem{display:flex;align-items:center;gap:10px;padding:11px 13px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all .15s}
+.ritem:hover,.ritem.on{border-color:#1a56db;background:#eff6ff}
+.rico{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.rinfo b{display:block;font-size:13px;font-weight:600}
+.rinfo span{font-size:11px;color:#6b7280}
+.lbtn{width:100%;padding:11px;background:#1a56db;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.lbtn:disabled{background:#9ca3af;cursor:not-allowed}
+
+/* APP */
+#app{position:fixed;top:0;left:0;right:0;bottom:0;display:none;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:46px;background:#0f1923;color:#fff;display:flex;align-items:center;padding:0 14px;gap:10px}
+.t-logo{font-size:14px;font-weight:700;white-space:nowrap}
+.t-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+.t-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tb{padding:4px 9px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:11px;font-family:inherit;white-space:nowrap}
+.tb:hover{background:rgba(255,255,255,.16)}
+.tb.g{background:rgba(21,128,61,.25);border-color:rgba(21,128,61,.4);color:#86efac}
+.zc{display:flex;align-items:center;gap:3px}
+.zb{width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.zl{font-size:11px;color:#94a3b8;min-width:30px;text-align:center}
+
+/* NAV TABS - admin only */
+.navtabs{height:36px;background:#1e293b;display:flex;align-items:center;padding:0 14px;gap:2px;flex-shrink:0}
+.ntab{padding:6px 14px;border-radius:6px;cursor:pointer;color:#94a3b8;font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap;text-decoration:none;display:flex;align-items:center;gap:5px}
+.ntab:hover{background:rgba(255,255,255,.08);color:#fff}
+.ntab.active{background:rgba(26,86,219,.3);color:#fff}
+.ntab.ext{color:#60a5fa}
+.ntab.ext:hover{background:rgba(96,165,250,.1)}
+
+/* MAIN AREA */
+.main{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+
+/* STATS */
+.stats{display:flex;gap:8px;padding:8px 14px 6px;flex-shrink:0;overflow-x:auto}
+.sc{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;min-width:130px;flex-shrink:0}
+.sl{font-size:10px;color:#6b7280;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.sv{font-size:18px;font-weight:700}
+.ss{font-size:10px;color:#9ca3af;margin-top:1px}
+
+/* BANNER */
+.banner{padding:6px 14px;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:7px;margin:0 14px 6px;flex-shrink:0}
+.b-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.b-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
+.b-purple{background:#f5f3ff;border:1px solid #ddd6fe;color:#6d28d9}
+.b-teal{background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e}
+.b-orange{background:#fff7ed;border:1px solid #fed7aa;color:#c2410c}
+.b-red{background:#fff1f2;border:1px solid #fecdd3;color:#be123c}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;padding:0 14px 6px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.sbox{flex:1;min-width:180px;position:relative}
+.sbox input{width:100%;padding:6px 11px 6px 28px;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-family:inherit;background:#fff;outline:none}
+.sbox input:focus{border-color:#1a56db}
+.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:#9ca3af}
+.fsel{padding:6px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-family:inherit;background:#fff;outline:none}
+.btn{padding:6px 13px;border-radius:7px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-p{background:#1a56db;color:#fff}
+.btn-p:hover{background:#1d4ed8}
+.btn-g{background:transparent;border:1px solid #e5e7eb;color:#6b7280}
+.btn-g:hover{border-color:#1a56db;color:#1a56db}
+
+/* TABLE WRAP - KEY: flex:1 + overflow:hidden, inner scroll */
+.twrap{flex:1;min-height:0;overflow:hidden;margin:0 14px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;display:flex;flex-direction:column}
+.thead-bar{padding:7px 12px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.th-title{font-size:13px;font-weight:600}
+.cnt{font-size:11px;background:#f1f5f9;color:#6b7280;padding:2px 8px;border-radius:10px}
+/* CRITICAL: this is the scrollable container */
+.tscroll{flex:1;min-height:0;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th.col-drag-over{border-left:2px solid #1a56db!important}
+th{padding:8px 11px;text-align:left;font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb;border-bottom:1px solid #e5e7eb;white-space:nowrap;cursor:grab;user-select:none}
+td{border-bottom:1px solid #f3f4f6;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8faff}
+.td{padding:9px 11px;line-height:1.5}
+
+/* BADGES */
+.bdg{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500}
+.bg{background:#dcfce7;color:#15803d}
+.br{background:#fee2e2;color:#991b1b}
+.by{background:#fef9c3;color:#854d0e}
+.bb{background:#dbeafe;color:#1e40af}
+.bpu{background:#ede9fe;color:#6d28d9}
+.bfirm{background:#eff6ff;color:#1d4ed8}
+.bnew{background:#fce7f3;color:#be185d}
+
+/* STATUS */
+.ssel{border:none;border-radius:10px;font-size:11px;font-weight:600;padding:3px 7px;cursor:pointer;outline:none;font-family:inherit}
+.sn{background:#f3f4f6;color:#6b7280}
+.ss2{background:#fef9c3;color:#854d0e}
+.sp{background:#dbeafe;color:#1e40af}
+.sf{background:#dcfce7;color:#15803d}
+
+/* DRAG */
+.dh{cursor:grab;color:#d1d5db;font-size:14px;padding:0 3px}
+.dh:hover{color:#9ca3af}
+tr.dragging{opacity:.4}
+tr.drag-over{outline:2px solid #1a56db}
+
+/* COL RESIZE */
+th{position:relative}
+.rzr{position:absolute;right:0;top:0;width:4px;height:100%;cursor:col-resize;background:transparent}
+.rzr:hover{background:#1a56db;opacity:.3}
+
+/* EXPAND */
+tr.xrow>td{border-bottom:none}
+.xpanel{background:#f8faff;border-bottom:2px solid #dbeafe}
+.xinner{padding:12px 14px 12px 44px}
+.xtitle{font-size:10px;font-weight:700;color:#1a56db;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+
+/* COSTS */
+.clist{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.crow{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dbeafe;border-radius:6px;padding:7px 10px}
+.cnum{font-size:11px;color:#9ca3af;min-width:14px}
+.csum{font-size:13px;font-weight:700;color:#1a56db;min-width:110px}
+.ccom{font-size:12px;flex:1}
+.cdate{font-size:10px;color:#9ca3af}
+.cdel{background:none;border:none;cursor:pointer;color:#dc2626;opacity:.5;font-size:13px}
+.cdel:hover{opacity:1}
+.ctot{display:flex;gap:10px;align-items:center;padding:7px 0 0;border-top:1px solid #dbeafe;font-size:12px}
+.acost{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:9px 11px;background:#fff;border:1.5px dashed #bfdbfe;border-radius:6px}
+.acrow{display:flex;gap:7px}
+.acost input,.acost textarea{padding:6px 9px;border:1px solid #dbeafe;border-radius:6px;font-size:12px;font-family:inherit;outline:none}
+.acost input:focus,.acost textarea:focus{border-color:#1a56db}
+.acs{width:120px}
+.acc{flex:1;resize:none;height:32px}
+
+/* FILES */
+.flist{display:flex;flex-direction:column;gap:5px;margin-bottom:7px}
+.frow{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #dbeafe;border-radius:6px;padding:6px 9px}
+.fic{font-size:16px}
+.fin{flex:1;min-width:0}
+.fnm{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmeta{font-size:10px;color:#9ca3af}
+.fdl{padding:2px 8px;font-size:11px;background:#eff6ff;color:#1a56db;border:1px solid #bfdbfe;border-radius:5px;cursor:pointer}
+.fup{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;background:#fff;border:1.5px dashed #bfdbfe;border-radius:6px;font-size:12px;color:#1a56db;cursor:pointer;font-weight:500}
+.fup:hover{background:#eff6ff}
+
+/* FORM */
+.cform{background:#fff;border:2px solid #1a56db;border-radius:8px;padding:14px;margin:0 14px 8px;flex-shrink:0}
+.cform-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px}
+.ffield label{display:block;font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.ffield input{width:100%;padding:6px 9px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:inherit;outline:none}
+.ffield input:focus{border-color:#1a56db}
+.factions{display:flex;gap:7px;margin-top:10px}
+
+/* ANALYTICS */
+.apage{flex:1;overflow:auto;padding:10px 14px;min-height:0}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:4px}
+.acard{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px}
+.actitle{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.brow{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.blabel{font-size:11px;color:#6b7280;width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btrack{flex:1;background:#f3f4f6;border-radius:3px;height:7px}
+.bfill{height:100%;border-radius:3px;background:#1a56db}
+.bval{font-size:11px;font-weight:600;min-width:70px;text-align:right}
+
+/* FINANCE */
+.fpage{flex:1;overflow:auto;padding:10px 14px;min-height:0}
+.ftable{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+.ftable th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;background:#f9fafb;border-bottom:1px solid #e5e7eb}
+.ftable td{padding:9px 12px;border-bottom:1px solid #f3f4f6;font-size:12px}
+.ftable tr:last-child td{border-bottom:none}
+.pp{color:#15803d;font-weight:700}
+.pn{color:#dc2626;font-weight:700}
+
+/* SCROLL NAV */
+.snav{position:fixed;right:10px;bottom:14px;display:flex;flex-direction:column;gap:4px;z-index:50}
+.snav button{width:30px;height:30px;background:#0f1923;border:none;color:#fff;border-radius:50%;cursor:pointer;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.snav button:hover{background:#1a56db}
+
+.nodata{text-align:center;padding:40px;color:#9ca3af}
+
+
+
+
+
+.exp-btn{padding:4px 9px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:11px;font-family:inherit}
+.exp-btn:hover{background:rgba(255,255,255,.16)}
+
+.adm-empty-cell:hover .adm-plus-btn{opacity:1!important}
+
+.adm-data-cell .adm-del-cell-btn{
+  position:absolute;top:2px;right:2px;
+  opacity:0;background:#fee2e2;border:none;border-radius:3px;
+  padding:1px 4px;color:#dc2626;cursor:pointer;font-size:10px;
+  transition:opacity .15s;z-index:2;
+}
+.adm-data-cell:hover .adm-del-cell-btn{opacity:1}
+
+/* Column drag in adm table */
+.adm-th-drag{cursor:grab}
+.adm-th-drag:active{cursor:grabbing}
+.adm-th-drag-over{border-left:3px solid #1a56db!important}
+
+.adm-col-resizer{position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;background:transparent}
+.adm-col-resizer:hover{background:rgba(255,255,255,.3)}
+
+
+
+
+.tscroll::-webkit-scrollbar,
+#admScroll::-webkit-scrollbar,
+.fpage::-webkit-scrollbar,
+.apage::-webkit-scrollbar { width:8px; height:8px; }
+.tscroll::-webkit-scrollbar-track,
+#admScroll::-webkit-scrollbar-track,
+.fpage::-webkit-scrollbar-track,
+.apage::-webkit-scrollbar-track { background:transparent; }
+.tscroll::-webkit-scrollbar-thumb,
+#admScroll::-webkit-scrollbar-thumb,
+.fpage::-webkit-scrollbar-thumb,
+.apage::-webkit-scrollbar-thumb {
+  background:transparent;
+  border-radius:4px;
+  transition:background .4s;
+}
+.tscroll:hover::-webkit-scrollbar-thumb,
+#admScroll:hover::-webkit-scrollbar-thumb,
+.fpage:hover::-webkit-scrollbar-thumb,
+.apage:hover::-webkit-scrollbar-thumb {
+  background:rgba(26,86,219,.5);
+}
+.tscroll:hover::-webkit-scrollbar-thumb:hover,
+#admScroll:hover::-webkit-scrollbar-thumb:hover,
+.fpage:hover::-webkit-scrollbar-thumb:hover,
+.apage:hover::-webkit-scrollbar-thumb:hover {
+  background:rgba(26,86,219,.8);
+}
+
+
+
+.tscroll::-webkit-scrollbar,
+#admScroll::-webkit-scrollbar,
+.fpage::-webkit-scrollbar,
+.apage::-webkit-scrollbar{width:8px;height:8px}
+.tscroll::-webkit-scrollbar-track,
+#admScroll::-webkit-scrollbar-track,
+.fpage::-webkit-scrollbar-track,
+.apage::-webkit-scrollbar-track{background:#e2e8f0}
+.tscroll::-webkit-scrollbar-thumb,
+#admScroll::-webkit-scrollbar-thumb,
+.fpage::-webkit-scrollbar-thumb,
+.apage::-webkit-scrollbar-thumb{background:#1a56db;border-radius:4px;opacity:0.6}
+.tscroll::-webkit-scrollbar-thumb:hover,
+#admScroll::-webkit-scrollbar-thumb:hover{background:#1d4ed8}
+
+
+/* === SCROLLBARS === */
+.tscroll::-webkit-scrollbar,
+#admScroll::-webkit-scrollbar,
+.fpage::-webkit-scrollbar,
+.apage::-webkit-scrollbar{width:8px;height:8px;display:block}
+.tscroll::-webkit-scrollbar-track,
+#admScroll::-webkit-scrollbar-track,
+.fpage::-webkit-scrollbar-track,
+.apage::-webkit-scrollbar-track{background:#f0f4ff;border-radius:4px}
+.tscroll::-webkit-scrollbar-thumb,
+#admScroll::-webkit-scrollbar-thumb,
+.fpage::-webkit-scrollbar-thumb,
+.apage::-webkit-scrollbar-thumb{background:#93c5fd;border-radius:4px}
+.tscroll::-webkit-scrollbar-thumb:hover,
+#admScroll::-webkit-scrollbar-thumb:hover,
+.fpage::-webkit-scrollbar-thumb:hover,
+.apage::-webkit-scrollbar-thumb:hover{background:#1a56db}
+
+/* ADM SCROLL */
+.adm-scroll-wrap{
+  flex:1;
+  overflow:auto;
+  min-height:0;
+  padding:0 14px 14px;
+}
+
+/* === SCROLLBARS FINAL === */
+.tscroll::-webkit-scrollbar,
+.adm-scroll-wrap::-webkit-scrollbar,
+.fpage::-webkit-scrollbar,
+.apage::-webkit-scrollbar,
+.stats::-webkit-scrollbar
+{ width:8px; height:8px; }
+
+.tscroll::-webkit-scrollbar-track,
+.adm-scroll-wrap::-webkit-scrollbar-track,
+.fpage::-webkit-scrollbar-track,
+.apage::-webkit-scrollbar-track
+{ background:#f0f4ff; border-radius:4px; }
+
+.tscroll::-webkit-scrollbar-thumb,
+.adm-scroll-wrap::-webkit-scrollbar-thumb,
+.fpage::-webkit-scrollbar-thumb,
+.apage::-webkit-scrollbar-thumb
+{ background:#93c5fd; border-radius:4px; }
+
+.tscroll::-webkit-scrollbar-thumb:hover,
+.adm-scroll-wrap::-webkit-scrollbar-thumb:hover,
+.fpage::-webkit-scrollbar-thumb:hover,
+.apage::-webkit-scrollbar-thumb:hover
+{ background:#1a56db; }
+
+.tscroll, .adm-scroll-wrap, .fpage, .apage
+{ scrollbar-width:thin; scrollbar-color:#93c5fd #f0f4ff; }
+
+
+/* GROK CHAT - улучшенный */
+#grokPanel{
+  position:fixed;right:0;top:0;bottom:0;width:420px;
+  background:#fff;border-left:2px solid #1a56db;
+  display:none;flex-direction:column;z-index:1000;
+  box-shadow:-8px 0 30px rgba(0,0,0,.15);
+}
+#grokPanel.open{display:flex}
+.grok-header{
+  padding:16px 20px;background:#0f172a;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.grok-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.grok-close{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;padding:0}
+.grok-close:hover{color:#fff}
+.grok-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:#f8fafc}
+.grok-msg{max-width:85%;padding:12px 16px;border-radius:12px;font-size:13.5px;line-height:1.45}
+.grok-msg.user{align-self:flex-end;background:#1a56db;color:#fff;border-bottom-right-radius:4px}
+.grok-msg.ai{align-self:flex-start;background:#f1f5f9;color:#111827;border-bottom-left-radius:4px}
+.grok-msg.ai.loading{color:#9ca3af;font-style:italic}
+.grok-input-area{padding:16px;border-top:1px solid #e5e7eb;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.grok-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.grok-quick button{padding:5px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:999px;font-size:11px;cursor:pointer;color:#374151;font-family:inherit}
+.grok-quick button:hover{background:#eff6ff;border-color:#bfdbfe;color:#1a56db}
+.grok-input-row{display:flex;gap:8px}
+.grok-input{flex:1;padding:12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font-family:inherit;outline:none;resize:none}
+.grok-input:focus{border-color:#1a56db}
+.grok-send{padding:0 24px;background:#1a56db;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.grok-send:hover{background:#1d4ed8}
+.grok-send:disabled{background:#9ca3af;cursor:not-allowed}
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lcard">
+    <div class="llogo">
+      <div class="li">🏭</div>
+      <h1>КазДемеу</h1>
+      <p>Система управления договорами</p>
+    </div>
+    <div class="rlist" id="rlist"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()" disabled>Войти</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🏭 КазДемеу</div>
+    <div class="t-badge" id="tbadge"></div>
+    <div class="t-right">
+      <div class="zc">
+        <button class="zb" onclick="zoom(-1)">−</button>
+        <span class="zl" id="zlbl">100%</span>
+        <button class="zb" onclick="zoom(1)">+</button>
+        <button class="zb" onclick="zoom(0)">↺</button>
+      </div>
+      <!-- sync disabled -->
+      <button class="exp-btn" onclick="exportData()" title="Сохранить все данные в файл">💾 Экспорт</button>
+      <label class="exp-btn" title="Загрузить сохранённые данные"><input type="file" accept=".json" onchange="importData(event)" style="display:none">📂 Импорт</label>
+      <button class="tb" onclick="exportData()" title="Скачать резервную копию">💾 Резерв</button>
+      <span id="fbStatus" style="font-size:11px;color:#94a3b8">🔴 Офлайн</span>
+      <button class="tb" style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.3);color:#86efac" onclick="fbLoadAll(applyFbData);fbListenChanges()">☁️ Загрузить</button>
+      <button class="tb" onclick="toggleGrok()" style="background:rgba(99,102,241,.25);border-color:rgba(99,102,241,.5);color:#c4b5fd">🤖 Grok AI</button>
+      <button class="tb" id="btnPassSettings" style="display:none;background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.3);color:#fbbf24" onclick="openPasswordSettings()">🔑 Пароли</button>
+      <button class="tb" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+  <div id="app-inner" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
+    <div class="navtabs" id="navtabs" style="display:none"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<div class="snav" id="snav" style="display:none">
+  <button onclick="scrollTbl(-300)">▲</button>
+  <button onclick="scrollTbl(300)">▼</button>
+</div>
+
+<!-- GROK PANEL -->
+<div id="grokPanel">
+  <div class="grok-header">
+    <div class="grok-title">🤖 Grok AI <span style="font-size:11px;background:#334155;padding:2px 8px;border-radius:999px;font-weight:400">онлайн</span></div>
+    <button class="grok-close" onclick="toggleGrok()">✕</button>
+  </div>
+  <div class="grok-messages" id="grokMessages">
+    <div class="grok-msg ai">Привет! Я Grok AI. Знаю все ваши договора, суммы и расходы. Спросите меня что угодно!</div>
+  </div>
+  <div class="grok-input-area">
+    <div class="grok-quick">
+      <button onclick="grokAsk('Сколько всего договоров и общая сумма?')">📊 Итоги</button>
+      <button onclick="grokAsk('Какие договора не оплачены? Список и суммы')">❌ Дебиторка</button>
+      <button onclick="grokAsk('Топ 5 самых дорогих договоров')">💰 Топ</button>
+      <button onclick="grokAsk('Проанализируй финансовое состояние и дай рекомендации')">📈 Анализ</button>
+      <button onclick="grokAsk('Какова общая сумма административных расходов по категориям?')">🏢 Расходы</button>
+      <button onclick="grokAsk('Какие риски есть в текущих договорах?')">⚠️ Риски</button>
+    </div>
+    <div class="grok-input-row">
+      <input type="text" class="grok-input" id="grokInput" placeholder="Спросите Grok о договорах..." onkeydown="if(event.key==='Enter')grokSend()">
+      <button class="grok-send" id="grokSendBtn" onclick="grokSend()">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// Firebase initialized above
+const db = window._db || null;
+
+let fbConnected = false;
+
+// Check connection
+if(db) db.ref('.info/connected').on('value', snap => {
+  fbConnected = snap.val();
+  const btn = document.getElementById('fbStatus');
+  if(btn) btn.textContent = fbConnected ? '🟢 Онлайн' : '🔴 Офлайн';
+});
+
+// ─── FIREBASE SAVE/LOAD ───────────────────────────────────────────────────────
+function fbSave(key, data){
+  if(!db||!fbConnected) return;
+  db.ref('kazdameu/'+key).set(data);
+}
+
+function fbLoad(key, callback){
+  db.ref('kazdameu/'+key).on('value', snap=>{
+    const val = snap.val();
+    if(val !== null) callback(val);
+  });
+}
+
+function fbSaveAll(){
+  if(!db||!fbConnected) return;
+  db.ref('kazdameu').set({
+    extra: extra,
+    deleted: [...deleted],
+    costs: costsDB,
+    files: filesDB,
+    status: statusDB,
+    admCats: admCats,
+    admRows: admRows,
+    updated: new Date().toISOString()
+  });
+}
+
+function fbLoadAll(callback){
+  if(!db) return;
+  db.ref('kazdameu').once('value', snap=>{
+    const val = snap.val();
+    if(val) callback(val);
+  });
+}
+
+// Listen for real-time changes from other users
+function fbListenChanges(){
+  if(!db) return;
+  db.ref('kazdameu').on('value', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    // Update local data
+    if(val.extra) { extra = val.extra; lsw('kd2_extra', extra); }
+    if(val.deleted) { deleted = new Set(val.deleted); lsw('kd2_del', [...deleted]); }
+    if(val.costs) { costsDB = val.costs; lsw('kd2_costs', costsDB); }
+    if(val.status) { statusDB = val.status; lsw('kd2_status', statusDB); }
+    if(val.admCats) { admCats = val.admCats; lsw('kd2_admcats', admCats); }
+    if(val.admRows) { admRows = val.admRows; lsw('kd2_admrows', admRows); }
+    // Re-render if app is open
+    if(role && document.getElementById('app').style.display !== 'none'){
+      const m = document.getElementById('main');
+      if(page==='c') renderContracts(m);
+      else if(page==='adm') renderAdminExpenses(m);
+      else if(page==='f') renderFinance(m);
+      else if(page==='a') renderAnalytics(m);
+    }
+  });
+}
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const BASE = [{"id": "row-1", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Подушка", "qty": "5000", "price": "5 308₸", "total": "26 540 000₸", "totalNum": 26540000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-2", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Матрац", "qty": "5000", "price": "16 895₸", "total": "84 475 000₸", "totalNum": 84475000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-3", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Костюм летний госпитальный", "qty": "800", "price": "10 050₸", "total": "8 040 000₸", "totalNum": 8040000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-4", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Наволочка", "qty": "46000", "price": "1 212₸", "total": "55 752 000₸", "totalNum": 55752000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-5", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Простыня", "qty": "40000", "price": "2 890₸", "total": "115 600 000₸", "totalNum": 115600000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-6", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Полотенце банное", "qty": "18000", "price": "1 285₸", "total": "23 130 000₸", "totalNum": 23130000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-7", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Халат утепленный госпитальный", "qty": "80", "price": "9 739₸", "total": "779 167₸", "totalNum": 779167.2, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-8", "firm": "Каз Демеу", "platform": "", "org": "НацГвардия", "item": "Костюм военнослужащих ремонтных подразделений", "qty": "300", "price": "22 000₸", "total": "6 600 000₸", "totalNum": 6600000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-9", "firm": "Каз Демеу", "platform": "", "org": "Bi Group", "item": "Куртка", "qty": "29", "price": "30 000₸", "total": "870 000₸", "totalNum": 870000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-10", "firm": "Каз Демеу", "platform": "", "org": "Bi Group", "item": "Жилет", "qty": "23", "price": "20 000₸", "total": "460 000₸", "totalNum": 460000.0, "costs": "", "location": "", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "16313702-2", "firm": "Каз Демеу", "platform": "", "org": "\"Управление специализированной службы охраны города Алматы", "item": "Куртка утепленная (для полковников)", "qty": "3", "price": "157 758₸", "total": "315 516₸", "totalNum": 315516.0, "costs": "", "location": "г.Алматы, Турксибский район улица Земнухова 2", "comment": "", "deadline": "Со дня регистрации договора в Казначействе течение 60 календарных дней.", "contract": "020140002301/260079/01", "phone": "9 (747)-450-54-77", "signed": "", "delivery": "2026-04-27 00:00:00"}, {"id": "row-12", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Восточно-Казахстанской области", "item": "куртка утепл АУП РБ", "qty": "230", "price": "33 868₸", "total": "7 789 640₸", "totalNum": 7789640.0, "costs": "", "location": "Восточно-Казахстанская область, город Усть-Каменогорск, проспект Шакарима 1.", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-13", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Жамбылской области", "item": "кост утепл УИП", "qty": "300", "price": "47 159₸", "total": "14 147 700₸", "totalNum": 14147700.0, "costs": "", "location": "Адрес, 080012, Жамбылская область, город Тараз, улица Желтоксан, 80", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-14", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Жамбылской области", "item": "кост утепл ПП и НС", "qty": "300", "price": "46 108₸", "total": "13 832 400₸", "totalNum": 13832400.0, "costs": "", "location": "Адрес, 080012, Жамбылская область, город Тараз, улица Желтоксан, 80", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-15", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Жамбылской области", "item": "куртка утеплный АУП", "qty": "800", "price": "33 868₸", "total": "27 094 400₸", "totalNum": 27094400.0, "costs": "", "location": "Адрес, 080012, Жамбылская область, город Тараз, улица Желтоксан, 80", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-16", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Акмолинский области", "item": "куртка утеплный АУП", "qty": "58", "price": "33 868₸", "total": "1 964 344₸", "totalNum": 1964344.0, "costs": "", "location": "город Кокшетау, проспект Н.Назарбаева 35 А", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-17", "firm": "Каз Демеу", "platform": "", "org": "МАЭК", "item": "костюм рабочий", "qty": "2658", "price": "16 889₸", "total": "44 890 962₸", "totalNum": 44890962.0, "costs": "", "location": "Актау МАЭК", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "row-18", "firm": "Prime tex", "platform": "", "org": "УМЗ", "item": "фильтр", "qty": "", "price": "", "total": "20 891 640₸", "totalNum": 20891640.0, "costs": "", "location": "Устькаман Абая103", "comment": "", "deadline": "", "contract": "", "phone": "", "signed": "", "delivery": ""}, {"id": "16449492-1", "firm": "Каз Демеу", "platform": "", "org": "Ветеринарная служба» управления ветеринарии Туркестанской области", "item": "Комбинезон", "qty": "16918", "price": "750₸", "total": "12 688 500₸", "totalNum": 12688500.0, "costs": "", "location": "Туркестанская область, район Сауран, с.30 лет Казахстана ​улица Казыбек би, строение 51, склад №54.", "comment": "", "deadline": "15 календарных дней со дня заключения договора", "contract": "211040007375/260036/00", "phone": "", "signed": "2026-03-30 00:00:00", "delivery": "13.04."}, {"id": "16521615-1", "firm": "Каз Демеу", "platform": "", "org": "Аппарат акима города Щучинска Бурабайского района\"", "item": "", "qty": "400", "price": "26 300₸", "total": "10 520 000₸", "totalNum": 10520000.0, "costs": "", "location": "Акмолинская область, Бурабайский район, г.Щучинск ул. Абылай-хана,34", "comment": "", "deadline": "60 календарных дней с момента заключения договора", "contract": "021240003473/260019/00", "phone": "87163645205", "signed": "", "delivery": "15.06."}, {"id": "16561513-1", "firm": "Каз Демеу", "platform": "", "org": "Национальный научный центр фтизиопульмонологии Республики Казахстан", "item": "пижамы", "qty": "700", "price": "5 000₸", "total": "3 500 000₸", "totalNum": 3500000.0, "costs": "", "location": "Алматы, Алатауский район, микрорайон Ботакоз, 15", "comment": "", "deadline": "по мере подачи заявки Заказчиком с учетом требований законодательства Республики Казахстан в минимальный срок поставки товаров", "contract": "020340004264/260064/00", "phone": "87015640036", "signed": "", "delivery": "по заявке"}, {"id": "16771217-1", "firm": "Каз Демеу", "platform": "", "org": "Кажсервис", "item": "пошив демисезонки", "qty": "100", "price": "20 000₸", "total": "2 000 000₸", "totalNum": 2000000.0, "costs": "", "location": "Астана, ул. Ж.Досмухамедулы, 50", "comment": "", "deadline": "В течении 16 календарных дней после получения заявки от Заказчика до 31.12.2026 г", "contract": "001140000590/261512/00", "phone": "77016256090", "signed": "2026-05-08 00:00:00", "delivery": ""}, {"id": "№000061174", "firm": "Евразиантех", "platform": "", "org": "ТОО Межрегионэнерготранзит", "item": "Костюм хлопчатобумажный", "qty": "80", "price": "18 000₸", "total": "1 440 000₸", "totalNum": 1440000.0, "costs": "", "location": "г. Костанай, ул. Киевская, 28", "comment": "", "deadline": "в течение 60 (шестидесяти) рабочих дней с даты заключения Договора", "contract": "363-26м", "phone": "8 (7142) 56-19-30 приемная", "signed": "2026-05-12 00:00:00", "delivery": ""}, {"id": "№000061174", "firm": "Евразиантех", "platform": "", "org": "ТОО Межрегионэнерготранзит", "item": "Костюм хлопчатобумажный", "qty": "547", "price": "18 000₸", "total": "9 846 000₸", "totalNum": 9846000.0, "costs": "", "location": "г. Костанай, ул. Киевская, 28", "comment": "", "deadline": "в течение 60 (шестидесяти) рабочих дней с даты заключения Договора", "contract": "363-26м", "phone": "56-24-94 отдел договоров", "signed": "2026-05-12 00:00:00", "delivery": ""}, {"id": "15677814-1", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции на транспорте", "item": "Костюм повседневный с длинными рукавами для женщин", "qty": "50", "price": "22 200₸", "total": "1 110 000₸", "totalNum": 1110000.0, "costs": "", "location": "г.Астана, район Сарыарка", "comment": "", "deadline": "Срок поставки 60 календарных дней после регистрации в органах казначейства", "contract": "101240008878/260011/00", "phone": "", "signed": "2026-01-09 00:00:00", "delivery": "23.03."}, {"id": "15697839-1 (80517013-ОК1)", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции на транспорте", "item": "Рубашка повседневная с длинными рукавами", "qty": "60", "price": "9 400₸", "total": "564 000₸", "totalNum": 564000.0, "costs": "", "location": "г.Астана, район Сарыарка", "comment": "", "deadline": "Срок поставки 60 календарных дней после регистрации в органах казначейства", "contract": "101240008878/260010/00", "phone": "59-29", "signed": "2026-01-09 00:00:00", "delivery": "23.03."}, {"id": "15637636-1 (80801465-ОК1)", "firm": "Каз Демеу", "platform": "", "org": "МВД", "item": "Костюм повседневный с короткими рукавами (мужской)", "qty": "20", "price": "24 800₸", "total": "496 000₸", "totalNum": 496000.0, "costs": "", "location": ".Астана: район \"Алматы\" пр. Тауельсыздык, 1", "comment": "", "deadline": "60 календарных дней с даты вступления в силу договора", "contract": "960340000514/260086/00", "phone": "", "signed": "2026-01-20 00:00:00", "delivery": "18.03."}, {"id": "15637636-1 (80801445-ОК1)", "firm": "Каз Демеу", "platform": "", "org": "МВД", "item": "Костюм повседневный с длинными рукавами (мужской)", "qty": "35", "price": "27 300₸", "total": "955 500₸", "totalNum": 955500.0, "costs": "", "location": ".Астана: район \"Алматы\" пр. Тауельсыздык, 1", "comment": "", "deadline": "60 календарных дней с даты вступления в силу договора", "contract": "960340000514/260088/00", "phone": "8(7172)71-50-91, 8(7172)72-21-83", "signed": "2026-01-20 00:00:00", "delivery": "09.04."}, {"id": "15637636-1 (80801765-ОК1)", "firm": "Каз Демеу", "platform": "", "org": "МВД", "item": "Костюм летний камуфляжной расцветки", "qty": "29", "price": "37 800₸", "total": "1 096 200₸", "totalNum": 1096200.0, "costs": "", "location": ".Астана: район \"Алматы\" пр. Тауельсыздык, 1", "comment": "", "deadline": "60 календарных дней с даты вступления в силу договора", "contract": "960340000514/260040/00", "phone": "начальник Департамента тыла", "signed": "2026-01-20 00:00:00", "delivery": "09.04."}, {"id": "15758476-1", "firm": "Каз Демеу", "platform": "", "org": "КГП «Атырау облысы Су Арнасы»", "item": "Костюм мужской, для защиты от пониженных температур, из ткани", "qty": "400", "price": "17 950₸", "total": "7 180 000₸", "totalNum": 7180000.0, "costs": "", "location": "г.Атырау Ауэзова 80", "comment": "", "deadline": "По заявке заказчика в течений 15 календарных дней. При определении победителем ОТП срок поставки 60 календарных дней.", "contract": "050840001451/260010/00", "phone": "87122454048, 454037", "signed": "2026-01-09 00:00:00", "delivery": "07.03."}, {"id": "15869628-1", "firm": "Каз Демеу", "platform": "", "org": "Управление специализированной службы охраны Западно-Казахстанской области", "item": "Костюм летний камуфляжной расцветки", "qty": "15", "price": "22 350₸", "total": "335 250₸", "totalNum": 335250.0, "costs": "", "location": "г.Уральск ул. М.Маметова 34/1", "comment": "", "deadline": "60 календарных дней", "contract": "020140002012/260006/00", "phone": "87112519324", "signed": "2026-01-26 00:00:00", "delivery": "13.04."}, {"id": "15932535-1", "firm": "Каз Демеу", "platform": "", "org": "Департамент полиции Западно-Казахстанской области", "item": "Костюм ауп жен длин", "qty": "69", "price": "20 000₸", "total": "1 380 000₸", "totalNum": 1380000.0, "costs": "", "location": "г.Уральск, п.Зачаганск ул.Рахимова 15А", "comment": "", "deadline": "в течении 60 календарных дней со дня регистрации договора в территориальном органе казначейства", "contract": "", "phone": "8 (7112) 98 4047 (гос закуп), 98 43 67 (зав.склад) почта: uto.dvd@yandex.kz", "signed": "", "delivery": "03.05."}, {"id": "15903691-1", "firm": "Каз Демеу", "platform": "", "org": "\"Управление специализированной службы охраны Алматинской области и области Жетісу", "item": "Костюм демисезонный для несения службы (для наружных служб)", "qty": "50", "price": "18 600₸", "total": "930 000₸", "totalNum": 930000.0, "costs": "", "location": "г.Талдыкорган, ул.Жансугурова 183", "comment": "", "deadline": "в течении 70 (семьдесят) календарных дней с момента регистрации его Заказчиком в органах казначейства", "contract": "020140001986/260040/00", "phone": "8/7282/30-82-83, 87759134887", "signed": "2026-02-12 00:00:00", "delivery": "18.04."}, {"id": "16248203-1", "firm": "Каз Демеу", "platform": "", "org": "\"АСТАНА-ЗЕЛЕНСТРОЙ\"", "item": "Жилет сигнальный со светоотражающими полосами (ОМТО)", "qty": "755", "price": "1 600₸", "total": "1 208 000₸", "totalNum": 1208000.0, "costs": "", "location": "г.Астана, район Байқоңыр Пушкина, 45", "comment": "", "deadline": "В течение года по заявке заказчика", "contract": "060240003537/260087/00", "phone": "533-108", "signed": "", "delivery": "2026-04-01 00:00:00"}, {"id": "16246432-1", "firm": "Каз Демеу", "platform": "", "org": "Товарищество с ограниченной ответственностью \"КАЖсервис\"", "item": "Жилеты сигнальные", "qty": "350", "price": "1 800₸", "total": "630 000₸", "totalNum": 630000.0, "costs": "", "location": "Костанайская область, г. Тобыл, Тауелсыздык 81", "comment": "", "deadline": "В течении 16 календарных дней после получения заявки от Заказчика", "contract": "001140000590/260440/00", "phone": "87751082010", "signed": "", "delivery": ""}, {"id": "16417780-1 (85624330-ЗЦП1)", "firm": "Каз Демеу", "platform": "", "org": "Аркалыкский центр оказания специальных социальных услуг\"", "item": "Костюм из х/б женский комплект (легенсы и футболка) летний повседневный", "qty": "68", "price": "7 000₸", "total": "462 000₸", "totalNum": 462000.0, "costs": "", "location": "Костанайская область, г.Аркалык Мауленова 35", "comment": "", "deadline": "после заключения договора, поставка 20 календарных дней", "contract": "990240000178/260211/00", "phone": "87143077631", "signed": "18.03.", "delivery": "06.04."}, {"id": "16417780-1 (85624227-ЗЦП1)", "firm": "Каз Демеу", "platform": "", "org": "Аркалыкский центр оказания специальных социальных услуг\"", "item": "Костюм из х/б мужской летний (двойка) повседневный", "qty": "84", "price": "7 000₸", "total": "588 000₸", "totalNum": 588000.0, "costs": "", "location": "Костанайская область, г.Аркалык Мауленова 36", "comment": "", "deadline": "после заключения договора, поставка 20 календарных дней", "contract": "990240000178/260211/00", "phone": "87143077631", "signed": "18.03.", "delivery": "06.04."}, {"id": "16421104-1", "firm": "Каз Демеу", "platform": "", "org": "Аркалыкский центр оказания специальных социальных услуг\"", "item": "Трусы", "qty": "336", "price": "580₸", "total": "194 880₸", "totalNum": 194880.0, "costs": "", "location": "Костанайская область, г.Аркалык Мауленова 37", "comment": "", "deadline": "после заключения договора, поставка 20 календарных дней", "contract": "990240000178/260238/00", "phone": "87143077631", "signed": "18.03.", "delivery": "06.04."}, {"id": "16420671-1", "firm": "Каз Демеу", "platform": "", "org": "Аркалыкский центр оказания специальных социальных услуг\"", "item": "Трико мужской", "qty": "84", "price": "2 800₸", "total": "235 200₸", "totalNum": 235200.0, "costs": "", "location": "Костанайская область, г.Аркалык Мауленова 38", "comment": "", "deadline": "после заключения договора, поставка 20 календарных дней", "contract": "990240000178/260239/00", "phone": "87143077631", "signed": "18.03.", "delivery": "06.04."}, {"id": "16434844-1 (85500830-ЗЦП1)", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Жилет мужской утепленный с капюшоном", "qty": "71", "price": "6 000₸", "total": "426 000₸", "totalNum": 426000.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16434844-1 (85584685-ЗЦП1", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Футболка женская.", "qty": "147", "price": "2 100₸", "total": "308 700₸", "totalNum": 308700.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16434844-1 (85350130-ЗЦП1", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Футболка мужская", "qty": "213", "price": "1 400₸", "total": "298 200₸", "totalNum": 298200.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16434844-1 (85350155-ЗЦП1", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Майка варенка спортивная из хлопка", "qty": "213", "price": "940₸", "total": "200 220₸", "totalNum": 200220.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16434844-1 (85584932-ЗЦП1", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Женский летний комплект двойка хлопковый", "qty": "49", "price": "6 000₸", "total": "294 000₸", "totalNum": 294000.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16434844-1 (85584959-ЗЦП1", "firm": "Каз Демеу", "platform": "", "org": "Константиновский психоневрологический центр оказания специальных социальных услуг\"", "item": "Летнее платье", "qty": "49", "price": "5 200₸", "total": "254 800₸", "totalNum": 254800.0, "costs": "", "location": "Павлодарская область, Успенский район, с.Константиновка Ленина 77", "comment": "", "deadline": "60 календарных дней", "contract": "220640008884/260078/00", "phone": "87474284328 бухгалтер, 87056139812 завхоз, +7 700 998 2931 завсклад (продукты), 87056089153 сестра хозяйка", "signed": "", "delivery": "06.05."}, {"id": "16561301-1", "firm": "Каз Демеу", "platform": "", "org": "Шалдайский психоневрологический центр оказания специальных социальных услуг", "item": "трусы", "qty": "840", "price": "580₸", "total": "487 200₸", "totalNum": 487200.0, "costs": "", "location": "Павлодарская область, Щербактинский район, с.Шалдай Каримжана Апсаликова д.50", "comment": "", "deadline": "60 дней", "contract": "160740007658/260106/00", "phone": "87056076118 (по согласованию товара) 87076078576 (менеджер гос.закупа)", "signed": "", "delivery": "04.05."}, {"id": "16561301-1", "firm": "Каз Демеу", "platform": "", "org": "Шалдайский психоневрологический центр оказания специальных социальных услуг", "item": "костюм", "qty": "187", "price": "5 200₸", "total": "972 400₸", "totalNum": 972400.0, "costs": "", "location": "Павлодарская область, Щербактинский район, с.Шалдай Каримжана Апсаликова д.50", "comment": "", "deadline": "60 дней", "contract": "", "phone": "", "signed": "", "delivery": "04.05."}, {"id": "16561301-1", "firm": "Каз Демеу", "platform": "", "org": "Шалдайский психоневрологический центр оказания специальных социальных услуг", "item": "халат", "qty": "210", "price": "2 980₸", "total": "625 800₸", "totalNum": 625800.0, "costs": "", "location": "Павлодарская область, Щербактинский район, с.Шалдай Каримжана Апсаликова д.50", "comment": "", "deadline": "60 дней", "contract": "", "phone": "", "signed": "", "delivery": "04.05."}];
+
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbzwCZUfscgG7tWEj2i0kmOROyOjDX4shVjLrC1Q7XJ2nQPuuAXULxOZrQVOeH5M9QsXsA/exec';
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+const ls=(k,d=null)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d;}catch{return d;}};
+const lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+let extra=ls('kd2_extra',[]),deleted=new Set(ls('kd2_del',[])),costsDB=ls('kd2_costs',{}),filesDB=ls('kd2_files',{}),statusDB=ls('kd2_status',{}),synced=ls('kd2_sync',null),colW=ls('kd2_cw',{}),lastSync=ls('kd2_st',''),zoomLvl=parseFloat(ls('kd2_zoom','1'));
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const baseData=()=>synced||BASE;
+const allData=()=>[...extra.filter(r=>!deleted.has(r.id)),...baseData().filter(r=>!deleted.has(r.id))];
+const firms=()=>[...new Set(allData().map(r=>r.firm))];
+const fmtN=n=>Math.round(n).toLocaleString('ru-RU')+'₸';
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let role=null,page='c',sq='',ff='',expanded=new Set(),editId=null,showForm=false,dragSrc=null,resizing=null;
+
+// ─── ROLES ───────────────────────────────────────────────────────────────────
+const ROLES={
+  admin:    {l:'Администратор',i:'👑',c:'#1e3a8a',bg:'#dbeafe',d:'Полный доступ'},
+  manager:  {l:'Менеджер',     i:'💼',c:'#064e3b',bg:'#d1fae5',d:'Заказы (без цен)'},
+  constructor:{l:'Конструктор',i:'🔧',c:'#4c1d95',bg:'#ede9fe',d:'Технические данные'},
+  technolog:{l:'Технолог',     i:'⚙️',c:'#134e4a',bg:'#ccfbf1',d:'Технологические данные'},
+  logist:   {l:'Логист',       i:'🚚',c:'#0c4a6e',bg:'#e0f2fe',d:'Доставка и сроки'},
+  goszakup: {l:'Госзакупщик',  i:'📋',c:'#881337',bg:'#ffe4e6',d:'Добавление/удаление'}
+};
+const BADGES={admin:'background:#1e3a8a;color:#93c5fd',manager:'background:#064e3b;color:#6ee7b7',constructor:'background:#4c1d95;color:#ddd6fe',technolog:'background:#134e4a;color:#99f6e4',logist:'background:#0c4a6e;color:#bae6fd',goszakup:'background:#881337;color:#fda4af'};
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+function initLogin(){
+  document.getElementById('rlist').innerHTML=Object.entries(ROLES).map(([k,v])=>`
+    <div class="ritem" onclick="selRole('${k}')" data-r="${k}">
+      <div class="rico" style="background:${v.c};color:#fff">${v.i}</div>
+      <div class="rinfo"><b>${v.l}</b><span>${v.d}</span></div>
+    </div>`).join('');
+}
+function selRole(r){role=r;document.querySelectorAll('.ritem').forEach(el=>el.classList.toggle('on',el.dataset.r===r));document.getElementById('lbtn').disabled=false;}
+
+// === СИСТЕМА ПАРОЛЕЙ ===
+const DEFAULT_PASSWORDS = {
+  admin:       'kazdemeu-nan',
+  manager:     'manager2026',
+  constructor: 'const2026',
+  technolog:   'tech2026',
+  logist:      'logist2026',
+  goszakup:    'zakup2026'
+};
+let ROLE_PASSWORDS = Object.assign({}, DEFAULT_PASSWORDS, ls('kd2_passwords', {}));
+function savePasswords(){ lsw('kd2_passwords', ROLE_PASSWORDS); }
+
+function doLogin(){
+  if(!role)return;
+  const pass = prompt('Введите пароль для роли: ' + ROLES[role].l);
+  if(!pass) return;
+  if(pass !== ROLE_PASSWORDS[role]){
+    alert('❌ Неверный пароль!');
+    return;
+  }
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('app').style.display='flex';
+  const R=ROLES[role];
+  document.getElementById('tbadge').textContent=R.l;
+  document.getElementById('tbadge').style.cssText=BADGES[role];
+  document.getElementById('snav').style.display='flex';
+  // show nav tabs only for admin
+  const nt=document.getElementById('navtabs');
+  if(role==='admin'){
+    nt.style.display='flex';
+    nt.innerHTML=`
+      <span class="ntab active" onclick="goPage('c')">📄 Договора</span>
+      <span class="ntab ext" onclick="openTab('a')" title="Открыть в новой вкладке">📊 Аналитика ↗</span>
+      <span class="ntab ext" onclick="openTab('f')" title="Открыть в новой вкладке">💰 Финансы ↗</span>
+      <span class="ntab" onclick="goPage('adm')">🏢 Адм. расходы</span>`;
+  } else { nt.style.display='none'; }
+  applyZoom();
+  goPage('c');
+}
+function doLogout(){
+  role=null;editId=null;showForm=false;expanded.clear();sq='';ff='';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('snav').style.display='none';
+  document.querySelectorAll('.ritem').forEach(el=>el.classList.remove('on'));
+  document.getElementById('lbtn').disabled=true;
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function goPage(p){
+  page=p;
+  if(role==='admin'){
+    document.getElementById('navtabs').innerHTML=`
+      <span class="ntab ${p==='c'?'active':''}" onclick="goPage('c')">📄 Договора</span>
+      <span class="ntab ext" onclick="openTab('a')">📊 Аналитика ↗</span>
+      <span class="ntab ext" onclick="openTab('f')">💰 Финансы ↗</span>
+      <span class="ntab ${p==='adm'?'active':''}" onclick="goPage('adm')">🏢 Адм. расходы</span>`;
+  }
+  const m=document.getElementById('main');
+  if(p==='c') renderContracts(m);
+  else if(p==='a') renderAnalytics(m);
+  else if(p==='f') renderFinance(m);
+  else if(p==='adm') renderAdminExpenses(m);
+}
+
+function openTab(p){
+  lsw('kd2_open',{p,r:role});
+  // Open same file with hash to trigger auto-open
+  const loc = window.location.href.split('#')[0];
+  window.open(loc + '#' + p, '_blank');
+}
+
+function reloadPageData(){
+  costsDB  = ls('kd2_costs',{});
+  statusDB = ls('kd2_status',{});
+  extra    = ls('kd2_extra',[]);
+  deleted  = new Set(ls('kd2_del',[]));
+  filesDB  = ls('kd2_files',{});
+  const m = document.getElementById('main');
+  if(page==='a') renderAnalytics(m);
+  else if(page==='f') renderFinance(m);
+  else renderTable();
+}
+
+window._openPage=function(p,r){
+  role=r;page=p;
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('app').style.display='flex';
+  const nt=document.getElementById('navtabs');
+  nt.style.display='flex';
+  nt.innerHTML=`<span class="ntab" onclick="window.close()" style="color:#f87171;cursor:pointer">← Назад</span><span class="ntab active">${p==='a'?'📊 Аналитика':'💰 Финансы'}</span><span class="ntab" onclick="reloadPageData()" style="color:#60a5fa;cursor:pointer">🔄 Обновить</span>`;
+  document.getElementById('snav').style.display='flex';
+  document.getElementById('tbadge').textContent=ROLES[r].l;
+  document.getElementById('tbadge').style.cssText=BADGES[r];
+  applyZoom();
+  const m=document.getElementById('main');
+  if(p==='a') renderAnalytics(m);
+  else renderFinance(m);
+};
+
+// ─── ZOOM ─────────────────────────────────────────────────────────────────────
+function zoom(d){if(d===0)zoomLvl=1;else if(d>0)zoomLvl=Math.min(2,+(zoomLvl+0.1).toFixed(1));else zoomLvl=Math.max(0.4,+(zoomLvl-0.1).toFixed(1));applyZoom();}
+function applyZoom(){document.body.style.zoom=zoomLvl;const l=document.getElementById('zlbl');if(l)l.textContent=Math.round(zoomLvl*100)+'%';lsw('kd2_zoom',zoomLvl);}
+document.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();zoom(e.deltaY<0?1:-1);},{passive:false});
+
+// ─── SCROLL ───────────────────────────────────────────────────────────────────
+function scrollTbl(dy){window.scrollBy({top:dy,behavior:'smooth'});}
+
+// ─── SYNC ─────────────────────────────────────────────────────────────────────
+function syncSheets(){
+  const b=document.getElementById('syncBtn');b.textContent='⏳...';b.disabled=true;
+  fetch(SHEETS_URL).then(r=>r.json()).then(res=>{
+    if(res.ok&&res.data){synced=res.data;lastSync=new Date().toLocaleString('ru-RU');lsw('kd2_sync',synced);lsw('kd2_st',lastSync);alert('✅ '+res.data.length+' записей');goPage(page);}
+  }).catch(e=>alert('❌ '+e.message)).finally(()=>{b.textContent='🔄 Sheets';b.disabled=false;});
+}
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function filtered(){
+  return allData().filter(r=>{
+    if(!isVisible(r.id)) return false; // hide from non-admin
+    const q=sq.toLowerCase();
+    return(!q||r.item.toLowerCase().includes(q)||r.org.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.contract||'').toLowerCase().includes(q))&&(!ff||r.firm===ff);
+  });
+}
+
+// ─── STATUS ───────────────────────────────────────────────────────────────────
+const SOPTS=[{v:'',l:'— нет —',c:'sn'},{v:'start',l:'🟡 Старт',c:'ss2'},{v:'plan',l:'🔵 Плановая',c:'sp'},{v:'finish',l:'🟢 Финиш',c:'sf'}];
+const getS=(id,r)=>(statusDB[id]||{})[r]||'';
+const getCls=v=>SOPTS.find(o=>o.v===v)?.c||'sn';
+function setStatus(id,r,v){if(!statusDB[id])statusDB[id]={};statusDB[id][r]=v;lsw('kd2_status',statusDB);const el=document.querySelector(`select[data-sid="${id}-${r}"]`);if(el){el.value=v;el.className='ssel '+getCls(v);}const cell=document.querySelector(`div[data-src="${id}"]`);if(cell)cell.innerHTML=statusCellHtml(id);}
+function ssel(id,r){const cur=getS(id,r);return `<select data-sid="${id}-${r}" class="ssel ${getCls(cur)}" onchange="setStatus('${id}','${r}',this.value);this.className='ssel '+getCls(this.value)">${SOPTS.map(o=>`<option value="${o.v}"${cur===o.v?' selected':''}>${o.l}</option>`).join('')}</select>`;}
+const sbadge=v=>{const o=SOPTS.find(x=>x.v===v);if(!o||!o.v)return '<span style="color:#9ca3af;font-size:11px">—</span>';const cls=v==='start'?'by':v==='plan'?'bb':'bg';return `<span class="bdg ${cls}">${o.l}</span>`;};
+function statusCellHtml(id){return ['manager','constructor','technolog','logist'].map(r=>`<div style="display:flex;align-items:center;gap:4px;white-space:nowrap"><span style="font-size:10px;color:#9ca3af;min-width:26px">${{manager:'Мен.',constructor:'Кон.',technolog:'Тех.',logist:'Лог.'}[r]}</span>${sbadge(getS(id,r))}</div>`).join('');}
+
+// ─── COSTS ───────────────────────────────────────────────────────────────────
+const getCosts=id=>costsDB[id]||[];
+function addCost(id){const s=parseFloat((document.getElementById('cs-'+id).value||'').replace(/\s/g,'').replace(',','.'));const c=(document.getElementById('cc-'+id).value||'').trim();if(!s||s<=0){document.getElementById('cs-'+id).style.borderColor='red';return;}if(!costsDB[id])costsDB[id]=[];costsDB[id].push({sum:s,com:c,date:new Date().toLocaleDateString('ru-RU')});lsw('kd2_costs',costsDB);expanded.add(id);goPage(page);}
+function delCost(id,i){costsDB[id].splice(i,1);lsw('kd2_costs',costsDB);expanded.add(id);goPage(page);}
+function costsHtml(row,canEdit){
+  const id=row.id,list=getCosts(id),tot=list.reduce((s,c)=>s+c.sum,0),rem=row.totalNum-tot;
+  let h=`<div class="xtitle">💸 Затраты</div>`;
+  if(list.length)h+=`<div class="clist">${list.map((c,i)=>`<div class="crow"><span class="cnum">${i+1}</span><span class="csum">${fmtN(c.sum)}</span><span class="ccom">${c.com||'—'}</span><span class="cdate">${c.date}</span>${canEdit?`<button class="cdel" onclick="delCost('${id}',${i})">✕</button>`:''}</div>`).join('')}</div><div class="ctot"><span>Итого: <b>${fmtN(tot)}</b></span><span style="color:${rem>=0?'#15803d':'#dc2626'};font-weight:600">${rem>=0?'Остаток':'Перерасход'}: ${fmtN(Math.abs(rem))}</span></div>`;
+  else h+=`<div style="color:#9ca3af;font-size:12px;margin-bottom:8px">Затрат нет</div>`;
+  if(canEdit)h+=`<div class="acost"><div class="acrow"><input id="cs-${id}" class="acs" type="number" placeholder="Сумма (₸)"><textarea id="cc-${id}" class="acc" placeholder="Комментарий..."></textarea></div><button class="btn btn-p" style="align-self:flex-start;font-size:11px;padding:5px 10px" onclick="addCost('${id}')">+ Добавить затрату</button></div>`;
+  return h;
+}
+
+// ─── FILES ────────────────────────────────────────────────────────────────────
+const getFiles=id=>filesDB[id]||[];
+const fic=name=>{
+  const n=(name||'').toLowerCase();
+  if(n.includes('.pdf')) return'📄';
+  if(n.includes('.doc')) return'📝';
+  if(n.includes('.xls')) return'📊';
+  if(n.includes('.png')||n.includes('.jpg')||n.includes('.jpeg')) return'🖼️';
+  if(n.includes('.zip')||n.includes('.rar')) return'🗜️';
+  return'🔗';
+};
+const fsz=(b,f)=>f&&f.type==='link'?'Google Drive':b<1024?b+'б':b<1048576?Math.round(b/1024)+'кб':(b/1048576).toFixed(1)+'мб';
+
+
+function togglePay(id){
+  if(role!=='admin') return;
+  const all=allData();
+  const r=all.find(x=>x.id===id);
+  if(!r) return;
+  const newVal = r.costs==='опл' ? '' : 'опл';
+  // update in extra or BASE
+  const ei=extra.findIndex(x=>x.id===id);
+  if(ei>=0){ extra[ei].costs=newVal; lsw('kd2_extra',extra); }
+  else{ const di=BASE.findIndex(x=>x.id===id); if(di>=0) BASE[di].costs=newVal; }
+  renderTable();
+}
+
+function quickAttach(id){
+  const name = prompt('Название файла (например: ТЗ_договор.pdf):');
+  if(!name || !name.trim()) return;
+  const url = prompt('Ссылка на Google Drive\n(Файл → Поделиться → Скопировать ссылку):');
+  if(!url || !url.trim()) return;
+  if(!filesDB[id]) filesDB[id]=[];
+  filesDB[id].push({name:name.trim(), url:url.trim(), date:new Date().toLocaleDateString('ru-RU'), type:'link'});
+  lsw('kd2_files',filesDB);
+  expanded.add(id);
+  renderTable();
+}
+
+function attachFile(id){
+  const name = prompt('Название файла (например: ТЗ_договор.pdf):');
+  if(!name || !name.trim()) return;
+  const url = prompt('Ссылка на Google Drive:\n(Файл → Поделиться → Скопировать ссылку):');
+  if(!url || !url.trim()) return;
+  if(!filesDB[id]) filesDB[id]=[];
+  filesDB[id].push({name:name.trim(), url:url.trim(), date:new Date().toLocaleDateString('ru-RU'), type:'link'});
+  lsw('kd2_files',filesDB);
+  expanded.add(id);
+  goPage(page);
+}
+function delFile(id,i){filesDB[id].splice(i,1);lsw('kd2_files',filesDB);expanded.add(id);goPage(page);}
+function openFile(id,i){const f=getFiles(id)[i];if(!f)return;window.open(f.url,'_blank');}
+function filesHtml(id,canAdd,canDelete){
+  const list=getFiles(id);
+  let h=`<div class="xtitle" style="margin-top:10px">📎 Технические файлы</div>`;
+  if(list.length)h+=`<div class="flist">${list.map((f,i)=>`<div class="frow"><span class="fic">${fic(f.name)}</span><div class="fin"><a href="${f.url}" target="_blank" class="fnm" style="color:#1a56db;text-decoration:none;cursor:pointer" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${f.name}</a><div class="fmeta">Google Drive · ${f.date}</div></div>${canDelete?`<button class="cdel" onclick="delFile('${id}',${i})">✕</button>`:''}</div>`).join('')}</div>`;
+  else h+=`<div style="color:#9ca3af;font-size:12px;margin-bottom:6px">Файлов нет</div>`;
+  if(canAdd)h+=`<button class="fup" onclick="attachFile('${id}')">🔗 Добавить ссылку</button>`;
+  return h;
+}
+
+// ─── FORM ─────────────────────────────────────────────────────────────────────
+const fv=id=>(document.getElementById(id)||{}).value||'';
+const FFIELDS=[{id:'nf-id',l:'Номер закупки *',ph:'16999999-1'},{id:'nf-firm',l:'Фирма',ph:'Каз Демеу'},{id:'nf-org',l:'Организация',ph:'МВД'},{id:'nf-item',l:'Предмет закупки',ph:'Костюм...'},{id:'nf-qty',l:'Кол-во',ph:'100',t:'number'},{id:'nf-price',l:'Цена',ph:'15 000₸'},{id:'nf-total',l:'Сумма (без НДС)',ph:'1 500 000₸'},{id:'nf-location',l:'Место поставки',ph:'г.Астана...'},{id:'nf-deadline',l:'Срок поставки',ph:'60 дней...'},{id:'nf-contract',l:'№ договора',ph:''},{id:'nf-phone',l:'Телефон',ph:''},{id:'nf-signed',l:'Дата подписания',ph:'01.06.2026'},{id:'nf-delivery',l:'Срок исполнения',ph:'01.08.2026'}];
+function formHtml(editing){
+  const r=editing?allData().find(x=>x.id===editId):null;
+  return `<div class="cform"><div class="cform-title">${editing?'✏️ Редактирование: '+editId:'+ Новый договор'}</div><div class="fgrid">${FFIELDS.map(f=>`<div class="ffield"><label>${f.l}</label><input id="${f.id}" type="${f.t||'text'}" placeholder="${f.ph}" value="${r?r[f.id.replace('nf-','')]||'':''}" ${f.id==='nf-id'&&editing?'readonly':''}></div>`).join('')}</div><div class="factions"><button class="btn btn-p" onclick="${editing?'saveEdit()':'saveNew()'}">✓ Сохранить</button><button class="btn btn-g" onclick="cancelForm()">Отмена</button></div></div>`;
+}
+const rowFromForm=()=>({id:fv('nf-id').trim(),firm:fv('nf-firm'),org:fv('nf-org'),item:fv('nf-item'),qty:fv('nf-qty'),price:fv('nf-price'),total:fv('nf-total'),totalNum:parseFloat((fv('nf-total')||'0').replace(/[^\d.,]/g,'').replace(',','.'))||0,costs:'',location:fv('nf-location'),deadline:fv('nf-deadline'),contract:fv('nf-contract'),phone:fv('nf-phone'),signed:fv('nf-signed'),delivery:fv('nf-delivery')});
+function saveNew(){const r=rowFromForm();if(!r.id){document.getElementById('nf-id').style.borderColor='red';return;}extra.unshift(r);lsw('kd2_extra',extra);showForm=false;goPage(page);}
+function saveEdit(){const u=rowFromForm();u.id=editId;const ei=extra.findIndex(x=>x.id===editId);if(ei>=0){extra[ei]=u;lsw('kd2_extra',extra);}else{const di=BASE.findIndex(x=>x.id===editId);if(di>=0)BASE[di]=u;}editId=null;showForm=false;goPage(page);}
+function cancelForm(){showForm=false;editId=null;goPage(page);}
+function startEdit(id){editId=id;showForm=true;goPage(page);}
+function startAdd(){editId=null;showForm=true;goPage(page);}
+function deleteRow(id){if(!confirm('Удалить?'))return;deleted.add(id);lsw('kd2_del',[...deleted]);extra=extra.filter(r=>r.id!==id);lsw('kd2_extra',extra);goPage(page);}
+
+// ─── DRAG ROWS ────────────────────────────────────────────────────────────────
+function onDS(e,id){dragSrc=id;setTimeout(()=>{const el=document.querySelector(`tr[data-id="${id}"]`);if(el)el.classList.add('dragging');},0);}
+function onDE(){document.querySelectorAll('tr.dragging,tr.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));}
+function onDO(e,id){e.preventDefault();document.querySelectorAll('tr.drag-over').forEach(el=>el.classList.remove('drag-over'));const el=document.querySelector(`tr[data-id="${id}"]`);if(el&&id!==dragSrc)el.classList.add('drag-over');}
+function onDrop(e,id){
+  e.preventDefault();onDE();if(!dragSrc||dragSrc===id)return;
+  const ei=extra.findIndex(r=>r.id===dragSrc);
+  if(ei>=0){const [m]=extra.splice(ei,1);const ti=Math.max(0,extra.findIndex(r=>r.id===id));extra.splice(ti,0,m);lsw('kd2_extra',extra);}
+  goPage(page);
+  requestAnimationFrame(()=>{const el=document.querySelector(`tr[data-id="${dragSrc}"]`);if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'});});
+}
+
+// ─── COL RESIZE ───────────────────────────────────────────────────────────────
+let colDragSrc=null;
+
+function initResizers(){
+  const ths=[...document.querySelectorAll('.tscroll th')];
+  ths.forEach((th,i)=>{
+    // resize handle
+    if(!th.querySelector('.rzr')){
+      const k=role+i;if(colW[k])th.style.minWidth=colW[k]+'px';
+      const rz=document.createElement('div');rz.className='rzr';
+      rz.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();resizing={th,k,sx:e.clientX,sw:th.getBoundingClientRect().width};document.body.style.cursor='col-resize';document.body.style.userSelect='none';});
+      th.appendChild(rz);
+    }
+    if(role==='admin'){
+      // hide button
+      if(!th.querySelector('.hide-col-btn')){
+        const hb=document.createElement('button');
+        hb.className='hide-col-btn';hb.title='Скрыть';hb.textContent='×';
+        hb.style.cssText='position:absolute;top:1px;right:5px;width:14px;height:14px;font-size:9px;background:rgba(220,38,38,.15);border:none;border-radius:3px;cursor:pointer;color:#dc2626;display:none;align-items:center;justify-content:center;line-height:1;padding:0';
+        hb.onclick=e=>{e.stopPropagation();toggleCol(i);};
+        th.addEventListener('mouseenter',()=>hb.style.display='flex');
+        th.addEventListener('mouseleave',()=>hb.style.display='none');
+        th.appendChild(hb);
+      }
+      // column drag
+      th.draggable=true;
+      th.style.cursor='grab';
+      th.ondragstart=e=>{colDragSrc=i;th.style.opacity='.4';e.dataTransfer.effectAllowed='move';};
+      th.ondragend=e=>{th.style.opacity='';document.querySelectorAll('th.col-drag-over').forEach(el=>el.classList.remove('col-drag-over'));};
+      th.ondragover=e=>{e.preventDefault();if(colDragSrc!==i){ths.forEach(t=>t.classList.remove('col-drag-over'));th.classList.add('col-drag-over');}};
+      th.ondrop=e=>{
+        e.preventDefault();
+        if(colDragSrc===null||colDragSrc===i)return;
+        th.classList.remove('col-drag-over');
+        // reorder columns in DOM
+        const tbl=document.querySelector('.tscroll table');
+        if(!tbl)return;
+        [...tbl.querySelectorAll('tr')].forEach(row=>{
+          const cells=[...row.children];
+          if(cells.length<=Math.max(colDragSrc,i))return;
+          const moved=cells[colDragSrc];
+          if(colDragSrc<i) row.insertBefore(moved,cells[i].nextSibling);
+          else row.insertBefore(moved,cells[i]);
+        });
+        colDragSrc=null;
+        initResizers();
+      };
+    }
+  });
+  applyHiddenCols();
+}
+document.addEventListener('mousemove',e=>{if(!resizing)return;const w=Math.max(40,resizing.sw+(e.clientX-resizing.sx));resizing.th.style.minWidth=w+'px';});
+document.addEventListener('mouseup',()=>{if(!resizing)return;colW[resizing.k]=resizing.th.getBoundingClientRect().width;lsw('kd2_cw',colW);resizing.th.style.cursor='';document.body.style.cursor='';document.body.style.userSelect='';resizing=null;});
+
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
+function onSearch(v){sq=v;renderTable();requestAnimationFrame(()=>{const inp=document.getElementById('sinp');if(inp){inp.focus();inp.setSelectionRange(v.length,v.length);}});}
+
+// ─── PERMISSIONS ─────────────────────────────────────────────────────────────
+const canPrice=()=>role==='admin';
+const canCosts=()=>role==='admin';
+const canManage=()=>role==='admin'||role==='goszakup';
+const canAddFile=()=>true;
+const canDelFile=()=>role==='admin';
+const myR=()=>({manager:'manager',constructor:'constructor',technolog:'technolog',logist:'logist'}[role]||null);
+
+// ─── CONTRACTS ────────────────────────────────────────────────────────────────
+function renderContracts(m){
+  const data=allData(),rows=filtered(),paid=data.filter(r=>r.costs==='опл').length,tot=data.reduce((s,r)=>s+r.totalNum,0);
+  const BNR={admin:['b-blue','👑 Полный доступ'],manager:['b-green','💼 Менеджер — цены скрыты'],constructor:['b-purple','🔧 Конструктор — цены скрыты'],technolog:['b-teal','⚙️ Технолог — цены скрыты'],logist:['b-orange','🚚 Логист — цены скрыты'],goszakup:['b-red','📋 Госзакупщик']};
+  const [bc,bt]=BNR[role];
+  m.innerHTML=`
+    <div class="stats">
+      <div class="sc"><div class="sl">Всего</div><div class="sv">${data.length}</div><div class="ss">показано: ${rows.length}${hiddenContracts.size>0?" · скрыто: "+hiddenContracts.size:""}</div></div>
+      <div class="sc"><div class="sl">Оплачено</div><div class="sv" style="color:#15803d">${paid}</div></div>
+      <div class="sc"><div class="sl">Не оплачено</div><div class="sv" style="color:#dc2626">${data.length-paid}</div></div>
+      ${canPrice()?`<div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:14px">${fmtN(tot)}</div></div>`:''}
+      ${lastSync?`<div class="sc"><div class="sl">Sheets</div><div class="sv" style="font-size:12px;color:#15803d">✅ синхр.</div><div class="ss">${lastSync}</div></div>`:''}
+    </div>
+    <div class="banner ${bc}">${bt}</div>
+    ${showForm?formHtml(!!editId):''}
+    <div class="toolbar">
+      ${canManage()?`<button class="btn btn-p" onclick="startAdd()">+ Добавить</button>`:''}
+      <div class="sbox"><span class="si">🔍</span><input id="sinp" placeholder="Поиск по товару, организации, номеру..." value="${sq}" oninput="onSearch(this.value)"></div>
+      ${role==='admin'&&hiddenCols.size>0?`<button class="btn btn-g" style="font-size:11px" onclick="hiddenCols=new Set();saveHidden();renderTable()">👁 Показать все колонки (${hiddenCols.size})</button>`:''}
+      <select class="fsel" onchange="ff=this.value;goPage('c')"><option value="">Все фирмы</option>${firms().map(f=>`<option value="${f}"${ff===f?' selected':''}>${f}</option>`).join('')}</select>
+    </div>
+    <div class="twrap">
+      <div class="thead-bar"><span class="th-title">Договора</span><span class="cnt">${rows.length} записей</span></div>
+      <div class="tscroll" id="tscroll"><div id="tbody"></div></div>
+    </div>`;
+  renderTable();
+  requestAnimationFrame(initResizers);
+}
+
+function renderTable(){
+  const rows=filtered();
+  const canDrag=canManage(),mr=myR();
+  // build cols
+  const cols=[];
+  if(canDrag)cols.push({k:'drag',l:''});
+  cols.push({k:'num',l:'№'});
+  if(canCosts())cols.push({k:'costs',l:'Затраты'});
+  if(role==='admin')cols.push({k:'stat',l:'Статусы'});
+  if(mr)cols.push({k:'mystat',l:'Статус'});
+  cols.push({k:'files',l:'Файлы'});
+  cols.push({k:'id',l:'Номер закупки'});
+  cols.push({k:'firm',l:'Фирма'});
+  cols.push({k:'org',l:'Организация'});
+  cols.push({k:'item',l:'Предмет'});
+  cols.push({k:'qty',l:'Кол-во'});
+  if(canPrice()){cols.push({k:'price',l:'Цена'});cols.push({k:'total',l:'Сумма'});}
+if(role==='admin'||role==='manager')cols.push({k:'pay',l:'Оплата'});
+  cols.push({k:'loc',l:'Место поставки'});
+  cols.push({k:'dl',l:'Срок'});
+  cols.push({k:'con',l:'№ договора'});
+  cols.push({k:'ph',l:'Телефон'});
+  cols.push({k:'sig',l:'Подписан'});
+  cols.push({k:'dev',l:'Исполнение'});
+  if(canManage())cols.push({k:'act',l:'Действия'});
+
+  let h=`<table><thead><tr>${cols.map(c=>`<th>${c.l}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    const isNew=extra.some(e=>e.id===r.id),isEdit=editId===r.id,exp=expanded.has(r.id);
+    const cl=getCosts(r.id),cs=cl.reduce((s,c)=>s+c.sum,0),fl=getFiles(r.id);
+    const pay=r.costs==='опл'?'<span class="bdg bg">Оплачено</span>':'<span class="bdg br">Не оплачено</span>';
+    const tds=cols.map(c=>{switch(c.k){
+      case 'drag':return`<td><div class="td"><span class="dh" draggable="false">⠿</span></div></td>`;
+      case 'num':return`<td><div class="td" style="color:#9ca3af;font-weight:600">${i+1}</div></td>`;
+      case 'costs':return`<td><div class="td"><button class="btn btn-g" style="font-size:11px;padding:2px 7px" onclick="toggleExp('${r.id}')">${exp?'▾':'▸'} ${cl.length?`💸${cl.length}·${fmtN(cs)}`:'+'}</button></div></td>`;
+      case 'stat':return`<td><div class="td" style="min-width:120px" data-src="${r.id}">${statusCellHtml(r.id)}</div></td>`;
+      case 'mystat':return`<td><div class="td">${ssel(r.id,mr)}</div></td>`;
+      case 'files':return`<td><div class="td" style="display:flex;align-items:center;gap:4px">
+  ${fl.length?`<button class="btn btn-g" style="font-size:11px;padding:2px 6px" onclick="toggleExp('${r.id}')">📎${fl.length}</button>`:''}
+  <button onclick="quickAttach('${r.id}')" title="Добавить ссылку на файл" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;cursor:pointer;color:#1a56db;font-size:14px;font-weight:700;flex-shrink:0">+</button>
+</div></td>`;
+      case 'id':return`<td><div class="td" style="font-size:11px;font-family:monospace;max-width:150px">${r.id}${isNew?'<span class="bdg bnew" style="margin-left:4px">new</span>':''}</div></td>`;
+      case 'firm':return`<td><div class="td"><span class="bdg bfirm">${r.firm||'—'}</span></div></td>`;
+      case 'org':return`<td><div class="td" style="max-width:170px;font-size:12px">${r.org||'—'}</div></td>`;
+      case 'item':return`<td><div class="td" style="max-width:190px">${r.item||'—'}</div></td>`;
+      case 'qty':return`<td><div class="td" style="font-weight:700;font-size:14px">${r.qty||'—'}</div></td>`;
+      case 'price':return`<td><div class="td" style="color:#1d4ed8;font-weight:600;white-space:nowrap">${r.price||'—'}</div></td>`;
+      case 'total':return`<td><div class="td" style="font-weight:600;white-space:nowrap">${r.total||'—'}</div></td>`;
+      case 'pay':
+  if(role==='admin'){
+    // admin can change payment status
+    const isPaid=r.costs==='опл';
+    return`<td><div class="td"><button onclick="togglePay('${r.id}')" style="border:none;background:none;cursor:pointer;padding:0">${pay}</button></div></td>`;
+  } else if(role==='manager'){
+    return`<td><div class="td">${pay}</div></td>`;
+  } else {
+    return'<td></td>';
+  }
+      case 'loc':return`<td><div class="td" style="max-width:140px;font-size:11px">${r.location||'—'}</div></td>`;
+      case 'dl':return`<td><div class="td" style="max-width:150px;font-size:11px">${r.deadline||'—'}</div></td>`;
+      case 'con':return`<td><div class="td" style="font-size:11px;font-family:monospace">${r.contract||'—'}</div></td>`;
+      case 'ph':return`<td><div class="td" style="font-size:11px">${r.phone||'—'}</div></td>`;
+      case 'sig':return`<td><div class="td" style="font-size:11px">${r.signed||'—'}</div></td>`;
+      case 'dev':return`<td><div class="td" style="font-size:11px">${r.delivery||'—'}</div></td>`;
+      case 'act':return`<td><div class="td" style="display:flex;gap:3px;align-items:center">
+  <button class="cdel" style="color:#1d4ed8;opacity:.7" onclick="startEdit('${r.id}')" title="Редактировать">✏️</button>
+  <button class="cdel" onclick="deleteRow('${r.id}')" title="Удалить">🗑</button>
+  ${role==='admin'?`<button onclick="toggleContractVisibility('${r.id}')" title="${hiddenContracts.has(r.id)?'Показать всем':'Скрыть от других'}" style="background:none;border:none;cursor:pointer;font-size:14px;opacity:${hiddenContracts.has(r.id)?'0.4':'0.7'}">${hiddenContracts.has(r.id)?'🙈':'👁'}</button>`:''}
+</div></td>`;
+      default:return'<td></td>';
+    }}).join('');
+    h+=`<tr data-id="${r.id}" class="${exp?'xrow':''}" style="${isEdit?'outline:2px solid #1a56db;background:#eff6ff':isNew?'background:#fdf4ff':''}"
+      ${canDrag?`draggable="true" ondragstart="onDS(event,'${r.id}')" ondragend="onDE()" ondragover="onDO(event,'${r.id}')" ondrop="onDrop(event,'${r.id}')"`:''}>
+      ${tds}</tr>`;
+    if(exp)h+=`<tr><td colspan="${cols.length}" style="padding:0"><div class="xpanel"><div class="xinner">${canCosts()?costsHtml(r,role==='admin'):''}${filesHtml(r.id,true,role==='admin')}</div></div></td></tr>`;
+  });
+  h+=`</tbody></table>${!rows.length?'<div class="nodata">🔍 Ничего не найдено</div>':''}`;
+  const tb=document.getElementById('tbody');if(tb)tb.innerHTML=h;
+  requestAnimationFrame(initResizers);
+}
+
+function toggleExp(id){if(expanded.has(id))expanded.delete(id);else expanded.add(id);renderTable();}
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+
+function renderAdminExpenses(m){
+  if(role!=='admin'){ m.innerHTML='<div style="padding:40px;text-align:center;color:#9ca3af">Доступ только для администратора</div>'; return; }
+
+  const totalAll = admCats.reduce((s,cat)=>s+(admRows[cat.id]||[]).reduce((ss,r)=>ss+r.sum,0),0);
+
+  // Find max rows across all cats
+  const maxRows = Math.max(...admCats.map(cat=>(admRows[cat.id]||[]).length), 0);
+
+  m.style.cssText="display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0";
+  m.innerHTML=`
+    <div class="stats">
+      <div class="sc"><div class="sl">Категорий</div><div class="sv">${admCats.length}</div></div>
+      <div class="sc"><div class="sl">Всего расходов</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(totalAll)}</div></div>
+    </div>
+    <div style="padding:0 14px 6px;display:flex;gap:8px;flex-shrink:0">
+      <button class="btn btn-p" onclick="admAddCat()">+ Добавить колонку</button>
+      <span style="font-size:12px;color:#9ca3af;align-self:center">Перетащите ячейку для редактирования • Нажмите сумму или комментарий для изменения</span>
+    </div>
+    <div style="padding:0 14px 6px;display:flex;gap:6px;flex-shrink:0;align-items:center">
+      <button onclick="document.getElementById('admScroll').scrollBy({left:-300,behavior:'smooth'})" style="padding:4px 12px;background:#1e293b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:14px">◀</button>
+      <button onclick="document.getElementById('admScroll').scrollBy({left:300,behavior:'smooth'})" style="padding:4px 12px;background:#1e293b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:14px">▶</button>
+      <span style="font-size:11px;color:#9ca3af">или прокрутите колёсиком мыши держа Shift</span>
+    </div>
+    <div id="admScroll" class="adm-scroll-wrap">
+      <table id="admTable" style="border-collapse:collapse;min-width:max-content;width:auto">
+        <thead>
+          <tr style="background:#0f1923;color:#fff;position:sticky;top:0;z-index:10">
+            <th style="padding:8px 12px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid #1e293b;min-width:40px;background:#0f1923">#</th>
+            ${admCats.map(cat=>{
+              const catTotal=(admRows[cat.id]||[]).reduce((s,r)=>s+r.sum,0);
+              return `<th draggable="true" data-catid="${cat.id}" class="adm-th-drag" style="padding:0;border:1px solid #1e293b;min-width:220px;background:#0f1923;position:relative"
+                ondragstart="admColDragStart(event,'${cat.id}')"
+                ondragover="admColDragOver(event,'${cat.id}')"
+                ondrop="admColDrop(event,'${cat.id}')"
+                ondragend="admColDragEnd()">
+                <div style="display:flex;flex-direction:column;gap:2px;padding:6px 10px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                    <span style="font-size:12px;font-weight:700;white-space:nowrap">⠿ ${cat.name}</span>
+                    <div style="display:flex;gap:3px;flex-shrink:0">
+                      <button onclick="admEditCat('${cat.id}')" style="background:rgba(255,255,255,.1);border:none;border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:#fff">✏️</button>
+                      <button onclick="admDelCat('${cat.id}')" style="background:rgba(220,38,38,.3);border:none;border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:#fca5a5">✕</button>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:#fca5a5;font-weight:600">Итого: ${fmtN(catTotal)}</div>
+                </div>
+                <div class="adm-col-resizer" onmousedown="admResizerStart(event,'${cat.id}')"></div>
+              </th>`;
+            }).join('')}
+            <th style="padding:8px;border:1px solid #1e293b;min-width:44px;background:#0f1923">
+              <button onclick="admAddCat()" style="background:rgba(255,255,255,.15);border:none;border-radius:4px;padding:3px 8px;color:#fff;cursor:pointer;font-size:14px;font-weight:700">+</button>
+            </th>
+          </tr>
+          <tr style="background:#1e293b;position:sticky;top:39px;z-index:9">
+            <th style="padding:5px 12px;font-size:9px;color:#94a3b8;border:1px solid #334155">№</th>
+            ${admCats.map(()=>`
+              <th style="padding:4px 8px;border:1px solid #334155">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                  <span style="font-size:9px;color:#60a5fa;font-weight:600;text-align:right">СУММА</span>
+                  <span style="font-size:9px;color:#94a3b8;font-weight:600">КОММЕНТАРИЙ</span>
+                </div>
+              </th>`).join('')}
+            <th style="border:1px solid #334155"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Array.from({length: maxRows+3}, (_,rowIdx)=>{
+            const isInput = rowIdx >= maxRows;
+            return `<tr style="${rowIdx%2===0?'background:#fff':'background:#f9fafb'}">
+              <td style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:center;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">${isInput?'':rowIdx+1}</td>
+              ${admCats.map(cat=>{
+                const catRows = admRows[cat.id]||[];
+                const r = catRows[rowIdx];
+                if(r){
+                  // existing row
+                  return `<td style="padding:0;border:1px solid #e5e7eb;position:relative" class="adm-data-cell">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;min-height:32px">
+                      <div onclick="admEditCell('${cat.id}',${rowIdx},'sum')" style="padding:6px 8px;text-align:right;font-weight:600;color:#111827;font-size:12px;cursor:pointer;border-right:1px solid #f0f4f8" title="Нажмите для изменения">${fmtN(r.sum)}</div>
+                      <div onclick="admEditCell('${cat.id}',${rowIdx},'com')" style="padding:6px 8px;font-size:12px;color:#374151;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px" title="${r.com||''}">${r.com||'—'}</div>
+                    </div>
+                    <button onclick="admDelRow('${cat.id}',${rowIdx})" class="adm-del-cell-btn" title="Удалить">✕</button>
+                  </td>`;
+                } else {
+                  // empty cell - show + button on hover
+                  return `<td style="padding:2px 6px;border:1px solid #e5e7eb;background:#fff" class="adm-empty-cell">
+                    <div class="adm-add-wrap" style="display:flex;align-items:center;justify-content:center;min-height:28px">
+                      <button onclick="admShowInput('${cat.id}',${rowIdx},this)" style="opacity:0;background:#eff6ff;border:1px dashed #bfdbfe;border-radius:4px;padding:2px 10px;font-size:13px;color:#1a56db;cursor:pointer;transition:opacity .15s" class="adm-plus-btn" title="Добавить запись">+</button>
+                    </div>
+                  </td>`;
+                }
+              }).join('')}
+              <td style="padding:4px;border:1px solid #e5e7eb;text-align:center">
+                ${!isInput && admCats.some(cat=>(admRows[cat.id]||[])[rowIdx])?
+                  `<button onclick="admDelEntireRow(${rowIdx})" style="background:none;border:none;cursor:pointer;color:#dc2626;opacity:.4;font-size:12px" title="Удалить строку">✕</button>`:''
+                }
+              </td>
+            </tr>`;
+          }).join('')}
+          <!-- TOTALS ROW -->
+          <tr style="background:#0f1923;color:#fff">
+            <td style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #1e293b;text-align:center">∑</td>
+            ${admCats.map(cat=>{
+              const catTotal=(admRows[cat.id]||[]).reduce((s,r)=>s+r.sum,0);
+              return `<td style="padding:8px 10px;border:1px solid #1e293b">
+                <div style="display:grid;grid-template-columns:1fr 1fr">
+                  <div style="text-align:right;font-weight:700;color:#fff;font-size:13px">${fmtN(catTotal)}</div>
+                  <div></div>
+                </div>
+              </td>`;
+            }).join('')}
+            <td style="border:1px solid #1e293b"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+
+function admShowInput(catId, rowIdx, btn){
+  const td = btn.closest('td');
+  td.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px 4px">
+    <input placeholder="Сумма" type="number" id="adm-s-${catId}-${rowIdx}" style="width:100%;padding:4px 6px;border:1px solid #bfdbfe;border-radius:4px;font-size:12px;font-family:inherit;outline:none;text-align:right" onkeydown="if(event.key==='Enter')admAddCell('${catId}',${rowIdx})" autofocus>
+    <input placeholder="Комментарий" type="text" id="adm-c-${catId}-${rowIdx}" style="width:100%;padding:4px 6px;border:1px solid #bfdbfe;border-radius:4px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')admAddCell('${catId}',${rowIdx})">
+  </div>`;
+  document.getElementById('adm-s-'+catId+'-'+rowIdx)?.focus();
+}
+
+function admAddCell(catId, rowIdx){
+  const sEl = document.getElementById('adm-s-'+catId+'-'+rowIdx);
+  const cEl = document.getElementById('adm-c-'+catId+'-'+rowIdx);
+  const s = parseFloat((sEl?.value||'').replace(/\s/g,'').replace(',','.'));
+  const c = cEl?.value?.trim()||'';
+  if(!s||s<=0){ if(sEl) sEl.style.borderColor='red'; return; }
+  if(!admRows[catId]) admRows[catId]=[];
+  // insert at specific row index
+  while(admRows[catId].length <= rowIdx) admRows[catId].push(null);
+  admRows[catId][rowIdx] = {sum:s, com:c, date:new Date().toLocaleDateString('ru-RU')};
+  // remove nulls
+  admRows[catId] = admRows[catId].filter(r=>r!==null);
+  saveAdmRows();
+  goPage('adm');
+}
+
+function admEditCell(catId, rowIdx, field){
+  const r = (admRows[catId]||[])[rowIdx];
+  if(!r) return;
+  const cur = field==='sum' ? r.sum : r.com;
+  const val = prompt(field==='sum'?'Новая сумма:':'Новый комментарий:', cur||'');
+  if(val===null) return;
+  if(field==='sum'){
+    const n = parseFloat(val.replace(/\s/g,'').replace(',','.'));
+    if(!n||n<=0) return;
+    admRows[catId][rowIdx].sum = n;
+  } else {
+    admRows[catId][rowIdx].com = val.trim();
+  }
+  saveAdmRows();
+  goPage('adm');
+}
+
+function admDelEntireRow(rowIdx){
+  if(!confirm('Удалить строку '+( rowIdx+1)+'?')) return;
+  admCats.forEach(cat=>{
+    if(admRows[cat.id] && admRows[cat.id][rowIdx]!==undefined){
+      admRows[cat.id].splice(rowIdx,1);
+    }
+  });
+  saveAdmRows();
+  goPage('adm');
+}
+
+
+function renderAnalytics(m){
+  const data=allData();
+  const paid=data.filter(r=>r.costs==='опл');
+  const tot=data.reduce((s,r)=>s+r.totalNum,0);
+  const ptot=paid.reduce((s,r)=>s+r.totalNum,0);
+  const avgDeal=data.length?tot/data.length:0;
+
+  // По фирмам
+  const byFirm={};
+  data.forEach(r=>{byFirm[r.firm]=(byFirm[r.firm]||0)+r.totalNum;});
+  const fs=Object.entries(byFirm).sort((a,b)=>b[1]-a[1]);
+  const mf=fs[0]?.[1]||1;
+
+  // Топ организаций
+  const byOrg={};
+  data.forEach(r=>{byOrg[r.org]=(byOrg[r.org]||0)+r.totalNum;});
+  const os=Object.entries(byOrg).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const mo=os[0]?.[1]||1;
+
+  // Топ товаров по количеству
+  const byItem={};
+  data.forEach(r=>{const q=parseInt(r.qty)||0;byItem[r.item||'—']=(byItem[r.item||'—']||0)+q;});
+  const topItems=Object.entries(byItem).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mi=topItems[0]?.[1]||1;
+
+  // Статусы выполнения
+  const sc={start:0,plan:0,finish:0,none:0};
+  data.forEach(r=>{const v=getS(r.id,'manager')||getS(r.id,'constructor')||getS(r.id,'logist')||'';if(v==='start')sc.start++;else if(v==='plan')sc.plan++;else if(v==='finish')sc.finish++;else sc.none++;});
+
+  // По регионам (из места поставки)
+  const byRegion={};
+  data.forEach(r=>{
+    const loc=r.location||'';
+    let region='Не указан';
+    if(loc.includes('Астана')||loc.includes('астана')) region='Астана';
+    else if(loc.includes('Алматы')||loc.includes('алматы')) region='Алматы';
+    else if(loc.includes('Костанай')) region='Костанайская обл.';
+    else if(loc.includes('Павлодар')) region='Павлодарская обл.';
+    else if(loc.includes('Уральск')||loc.includes('ЗКО')) region='ЗКО';
+    else if(loc.includes('Атырау')) region='Атырау';
+    else if(loc.includes('Талдыкорган')||loc.includes('Алматинской')) region='Алматинская обл.';
+    else if(loc.includes('Туркестан')) region='Туркестанская обл.';
+    else if(loc.includes('Акмолин')||loc.includes('Щучинск')) region='Акмолинская обл.';
+    else if(loc) region='Другие';
+    byRegion[region]=(byRegion[region]||0)+1;
+  });
+  const regions=Object.entries(byRegion).sort((a,b)=>b[1]-a[1]);
+  const mr=regions[0]?.[1]||1;
+
+  m.innerHTML=`
+    <div class="stats">
+      <div class="sc"><div class="sl">Договоров</div><div class="sv">${data.length}</div></div>
+      <div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(tot)}</div></div>
+      <div class="sc"><div class="sl">Оплачено</div><div class="sv" style="color:#15803d;font-size:13px">${fmtN(ptot)}</div></div>
+      <div class="sc"><div class="sl">Не оплачено</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(tot-ptot)}</div></div>
+      <div class="sc"><div class="sl">Средний чек</div><div class="sv" style="font-size:13px">${fmtN(avgDeal)}</div></div>
+    </div>
+    <div class="apage"><div class="agrid">
+
+      <div class="acard"><div class="actitle">📦 По фирмам (сумма)</div>
+        ${fs.map(([k,v])=>`<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mf*100)}%"></div></div><div class="bval">${fmtN(v)}</div></div>`).join('')}
+      </div>
+
+      <div class="acard"><div class="actitle">🏢 Топ организаций по сумме</div>
+        ${os.map(([k,v])=>`<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mo*100)}%;background:#7c3aed"></div></div><div class="bval">${fmtN(v)}</div></div>`).join('')}
+      </div>
+
+      <div class="acard"><div class="actitle">🎯 Топ товаров по количеству</div>
+        ${topItems.map(([k,v])=>`<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mi*100)}%;background:#0891b2"></div></div><div class="bval">${v.toLocaleString('ru')} шт.</div></div>`).join('')}
+      </div>
+
+      <div class="acard"><div class="actitle">🗺️ По регионам (кол-во договоров)</div>
+        ${regions.map(([k,v])=>`<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mr*100)}%;background:#059669"></div></div><div class="bval">${v} дог.</div></div>`).join('')}
+      </div>
+
+      <div class="acard"><div class="actitle">📋 Статусы выполнения</div>
+        ${[['🟡 Старт',sc.start,'#854d0e'],['🔵 Плановая',sc.plan,'#1e40af'],['🟢 Финиш',sc.finish,'#15803d'],['— Не задан',sc.none,'#9ca3af']].map(([l,v,c])=>`<div class="brow"><div class="blabel">${l}</div><div class="btrack"><div class="bfill" style="width:${data.length?Math.round(v/data.length*100):0}%;background:${c}"></div></div><div class="bval">${v} (${data.length?Math.round(v/data.length*100):0}%)</div></div>`).join('')}
+        <div style="margin-top:10px;padding:8px;background:#f8faff;border-radius:6px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Завершено:</span><span style="font-weight:700;color:#15803d">${Math.round(sc.finish/data.length*100||0)}%</span></div>
+          <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.round(sc.finish/data.length*100||0)}%;background:#15803d;border-radius:4px"></div></div>
+        </div>
+      </div>
+
+      <div class="acard"><div class="actitle">💳 Оплата договоров</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg viewBox="0 0 36 36" style="width:80px;height:80px;transform:rotate(-90deg)">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#15803d" stroke-width="3"
+                stroke-dasharray="${data.length?Math.round(paid.length/data.length*100):0} 100" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#15803d">${data.length?Math.round(paid.length/data.length*100):0}%</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#15803d;font-weight:600">✅ Оплачено</span><span style="font-weight:700">${paid.length}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#dc2626;font-weight:600">❌ Не оплачено</span><span style="font-weight:700">${data.length-paid.length}</span></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#6b7280">Сумма оплаченных: <b style="color:#15803d">${fmtN(ptot)}</b></div>
+        <div style="font-size:11px;color:#6b7280;margin-top:3px">Сумма неоплаченных: <b style="color:#dc2626">${fmtN(tot-ptot)}</b></div>
+      </div>
+
+    </div></div>`;
+}
+
+// ─── FINANCE ──────────────────────────────────────────────────────────────────
+function renderFinance(m){
+  const data=allData();
+  const rows=data.map(r=>{
+    const cl=getCosts(r.id),ct=cl.reduce((s,c)=>s+c.sum,0);
+    return{...r,ct,profit:r.totalNum-ct,hasCosts:cl.length>0};
+  });
+  const gt=rows.reduce((s,r)=>s+r.totalNum,0);
+  const gc=rows.reduce((s,r)=>s+r.ct,0);
+  const gp=gt-gc;
+  const paid=rows.filter(r=>r.costs==='опл');
+  const unpaid=rows.filter(r=>r.costs!=='опл');
+  const paidSum=paid.reduce((s,r)=>s+r.totalNum,0);
+  const unpaidSum=unpaid.reduce((s,r)=>s+r.totalNum,0);
+  const paidCosts=paid.reduce((s,r)=>s+r.ct,0);
+  const realProfit=paidSum-paidCosts; // реальная прибыль с оплаченных
+  const potentialProfit=gp; // потенциальная если все заплатят
+  const pct=gt>0?Math.round(paidSum/gt*100):0;
+
+  // По фирмам рентабельность
+  const firmProfit={};
+  rows.forEach(r=>{
+    if(!firmProfit[r.firm]) firmProfit[r.firm]={sum:0,costs:0};
+    firmProfit[r.firm].sum+=r.totalNum;
+    firmProfit[r.firm].costs+=r.ct;
+  });
+
+  // Топ-5 прибыльных
+  const top5=rows.filter(r=>r.hasCosts).sort((a,b)=>b.profit-a.profit).slice(0,5);
+
+  m.innerHTML=`
+    <div class="stats">
+      <div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(gt)}</div></div>
+      <div class="sc"><div class="sl">Всего затрат</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(gc)}</div></div>
+      <div class="sc"><div class="sl">Прибыль</div><div class="sv" style="color:${gp>=0?'#15803d':'#dc2626'};font-size:13px">${fmtN(gp)}</div></div>
+      <div class="sc"><div class="sl">Дебиторка</div><div class="sv" style="color:#d97706;font-size:13px">${fmtN(unpaidSum)}</div><div class="ss">${unpaid.length} дог.</div></div>
+      <div class="sc"><div class="sl">Рентабельность</div><div class="sv" style="color:${gp>=0?'#15803d':'#dc2626'}">${gc>0?Math.round(gp/gt*100):0}%</div></div>
+    </div>
+    <div class="fpage">
+
+      <!-- ЖИВЫЕ ДЕНЬГИ -->
+      <div style="background:linear-gradient(135deg,#0f1923,#1a2d45);border-radius:12px;padding:20px;margin-bottom:14px;color:#fff">
+        <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px">💵 Живые деньги (реальный результат)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">✅ Получено (оплачено)</div>
+            <div style="font-size:20px;font-weight:700;color:#86efac">${fmtN(paidSum)}</div>
+            <div style="font-size:11px;color:#6ee7b7;margin-top:2px">${paid.length} договоров</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">📤 Затраты (из оплаченных)</div>
+            <div style="font-size:20px;font-weight:700;color:#fca5a5">${fmtN(paidCosts)}</div>
+            <div style="font-size:11px;color:#f87171;margin-top:2px">${paidCosts?Math.round(paidCosts/paidSum*100):0}% от полученного</div>
+          </div>
+          <div style="background:rgba(21,128,61,.2);border:1px solid rgba(21,128,61,.4);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#86efac;margin-bottom:4px">🟢 Чистая прибыль (сейчас)</div>
+            <div style="font-size:22px;font-weight:700;color:${realProfit>=0?'#4ade80':'#f87171'}">${fmtN(realProfit)}</div>
+            <div style="font-size:11px;color:#86efac;margin-top:2px">${paidSum>0?Math.round(realProfit/paidSum*100):0}% маржа</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">⏳ Ожидается (не оплачено)</div>
+            <div style="font-size:20px;font-weight:700;color:#fde68a">${fmtN(unpaidSum)}</div>
+            <div style="font-size:11px;color:#fbbf24;margin-top:2px">${unpaid.length} договоров</div>
+          </div>
+          <div style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">🚀 Потенциал (если все заплатят)</div>
+            <div style="font-size:20px;font-weight:700;color:#c4b5fd">${fmtN(potentialProfit)}</div>
+            <div style="font-size:11px;color:#a5b4fc;margin-top:2px">при 0 затратах на остаток</div>
+          </div>
+        </div>
+        <div style="margin-top:4px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-bottom:5px">
+            <span>Оплачено ${pct}% от общей суммы</span>
+            <span>${fmtN(paidSum)} из ${fmtN(gt)}</span>
+          </div>
+          <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#15803d,#4ade80);border-radius:4px;transition:width .5s"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+
+        <div class="acard"><div class="actitle">🏆 Топ-5 прибыльных договоров</div>
+          ${top5.length?top5.map((r,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px">
+            <span style="font-weight:700;color:#6b7280;min-width:16px">${i+1}</span>
+            <div style="flex:1;min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.org}">${r.org}</div><div style="font-size:10px;color:#9ca3af">${r.item||'—'}</div></div>
+            <span class="pp" style="white-space:nowrap">${fmtN(r.profit)}</span>
+          </div>`).join(''):'<div style="color:#9ca3af;font-size:12px">Нет данных о затратах</div>'}
+        </div>
+
+        <div class="acard"><div class="actitle">🏢 Рентабельность по фирмам</div>
+          ${Object.entries(firmProfit).map(([k,v])=>{
+            const pct=v.sum?Math.round((v.sum-v.costs)/v.sum*100):0;
+            return`<div style="margin-bottom:8px;font-size:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><span style="font-weight:700;color:${pct>=0?'#15803d':'#dc2626'}">${pct}%</span></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(100,Math.max(0,pct))}%;background:${pct>=0?'#15803d':'#dc2626'};border-radius:3px"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+
+      </div>
+
+      <div class="acard" style="margin-bottom:12px"><div class="actitle">⚠️ Дебиторская задолженность (не оплачено)</div>
+        <table class="ftable" style="margin-top:8px">
+          <thead><tr><th>№</th><th>Организация</th><th>Предмет</th><th>Сумма</th></tr></thead>
+          <tbody>
+            ${unpaid.slice(0,10).map((r,i)=>`<tr><td>${i+1}</td><td style="font-size:12px">${r.org}</td><td style="font-size:12px">${r.item||'—'}</td><td style="font-weight:600;color:#d97706">${fmtN(r.totalNum)}</td></tr>`).join('')}
+            ${unpaid.length>10?`<tr><td colspan="4" style="text-align:center;color:#9ca3af;font-size:12px">... ещё ${unpaid.length-10} договоров</td></tr>`:''}
+            <tr style="font-weight:700;background:#fff7ed"><td colspan="3" style="text-align:right;padding-right:12px">ИТОГО дебиторка:</td><td style="color:#d97706">${fmtN(unpaidSum)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="acard"><div class="actitle">📊 Все договора (план vs факт)</div>
+        <table class="ftable" style="margin-top:8px">
+          <thead><tr><th>№</th><th>Закупка</th><th>Организация</th><th>Предмет</th><th>Сумма договора</th><th>Затраты</th><th>Прибыль</th><th>Оплата</th></tr></thead>
+          <tbody>
+            ${rows.map((r,i)=>`<tr>
+              <td>${i+1}</td>
+              <td style="font-size:10px;font-family:monospace">${r.id}</td>
+              <td style="font-size:11px;max-width:140px">${r.org}</td>
+              <td style="font-size:11px;max-width:150px">${r.item||'—'}</td>
+              <td style="font-weight:600">${fmtN(r.totalNum)}</td>
+              <td style="color:#dc2626">${r.ct?fmtN(r.ct):'—'}</td>
+              <td class="${r.hasCosts?(r.profit>=0?'pp':'pn'):''}">${r.hasCosts?fmtN(r.profit):'—'}</td>
+              <td>${r.costs==='опл'?'<span class="bdg bg">Оплачено</span>':'<span class="bdg br">Не опл.</span>'}</td>
+            </tr>`).join('')}
+            <tr style="background:#f9fafb;font-weight:700">
+              <td colspan="4" style="text-align:right;padding-right:12px">ИТОГО:</td>
+              <td>${fmtN(gt)}</td>
+              <td class="pn">${fmtN(gc)}</td>
+              <td class="${gp>=0?'pp':'pn'}">${fmtN(gp)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>`;
+}
+
+
+
+
+
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+function exportData(){
+  const data = {
+    extra: extra,
+    deleted: [...deleted],
+    costs: costsDB,
+    files: filesDB,
+    status: statusDB,
+    exported: new Date().toLocaleString('ru-RU')
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'КазДемеу_данные_' + new Date().toLocaleDateString('ru-RU').replace(/\./g,'-') + '.json';
+  a.click();
+}
+
+function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = function(ev){
+    try{
+      const d = JSON.parse(ev.target.result);
+      if(d.extra) { extra = d.extra; lsw('kd2_extra', extra); }
+      if(d.deleted) { deleted = new Set(d.deleted); lsw('kd2_del', [...deleted]); }
+      if(d.costs) { costsDB = d.costs; lsw('kd2_costs', costsDB); }
+      if(d.files) { filesDB = d.files; lsw('kd2_files', filesDB); }
+      if(d.status) { statusDB = d.status; lsw('kd2_status', statusDB); }
+      alert('✅ Данные загружены успешно!');
+      goPage(page);
+    } catch(err) {
+      alert('❌ Ошибка: неверный формат файла');
+    }
+  };
+  r.readAsText(file);
+  e.target.value = '';
+}
+
+// ─── HIDE COLUMNS (admin only) ───────────────────────────────────────────────
+let hiddenCols = new Set(ls('kd2_hidden',[]));
+function saveHidden(){lsw('kd2_hidden',[...hiddenCols]);}
+function toggleCol(idx){
+  if(hiddenCols.has(idx)) hiddenCols.delete(idx);
+  else hiddenCols.add(idx);
+  saveHidden();
+  applyHiddenCols();
+}
+function applyHiddenCols(){
+  document.querySelectorAll('table').forEach(t=>{
+    const ths=[...t.querySelectorAll('thead tr th')];
+    ths.forEach((th,i)=>{
+      const hide=hiddenCols.has(i);
+      th.style.display=hide?'none':'';
+      t.querySelectorAll('tbody tr').forEach(tr=>{
+        const td=tr.children[i];
+        if(td) td.style.display=hide?'none':'';
+      });
+    });
+  });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+
+// Admin expenses storage
+const DEFAULT_ADM_CATS = [{"id": "adm-1", "name": "Алиасхат"}, {"id": "adm-2", "name": "Нуржигит"}, {"id": "adm-3", "name": "Асеке"}, {"id": "adm-4", "name": "Узбеки прочие траты Алм"}, {"id": "adm-5", "name": "Оклад Алмата"}, {"id": "adm-6", "name": "Аренда Алмата цех"}, {"id": "adm-7", "name": "прочие траты цех Алмата"}, {"id": "adm-8", "name": "прочие траты цех Алмата 2"}, {"id": "adm-9", "name": "Приход"}, {"id": "adm-10", "name": "остатки с 25 года траты"}, {"id": "adm-11", "name": "Оклады ЗП Астана"}, {"id": "adm-12", "name": "С табл 25 года расчеты"}, {"id": "adm-13", "name": "Айнабалаев траты"}, {"id": "adm-14", "name": "Прочие"}];
+const DEFAULT_ADM_ROWS = {"adm-1": [{"sum": 60000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 100000.0, "com": "", "date": ""}, {"sum": 700000.0, "com": "", "date": ""}, {"sum": 4000.0, "com": "", "date": ""}, {"sum": 5000000.0, "com": "", "date": ""}, {"sum": 700000.0, "com": "", "date": ""}, {"sum": 50000.0, "com": "", "date": ""}, {"sum": 9000.0, "com": "", "date": ""}, {"sum": 15000.0, "com": "", "date": ""}, {"sum": 700000.0, "com": "", "date": ""}, {"sum": 50000.0, "com": "", "date": ""}, {"sum": 4800.0, "com": "", "date": ""}, {"sum": 85000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 20000.0, "com": "", "date": ""}, {"sum": 3000.0, "com": "", "date": ""}, {"sum": 700000.0, "com": "", "date": ""}, {"sum": 20000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "2026-05-23 00:00:00", "date": ""}], "adm-2": [{"sum": 350000.0, "com": "", "date": ""}, {"sum": 50000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 50000.0, "com": "", "date": ""}, {"sum": 250000.0, "com": "", "date": ""}, {"sum": 13000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 500000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 10000.0, "com": "", "date": ""}, {"sum": 50000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 15000.0, "com": "", "date": ""}, {"sum": 350000.0, "com": "", "date": ""}, {"sum": 120000.0, "com": "2026-05-17 00:00:00", "date": ""}, {"sum": 250000.0, "com": "2026-05-27 00:00:00", "date": ""}], "adm-3": [{"sum": 350000.0, "com": "", "date": ""}, {"sum": 100000.0, "com": "", "date": ""}, {"sum": 500000.0, "com": "", "date": ""}, {"sum": 100000.0, "com": "", "date": ""}, {"sum": 500000.0, "com": "", "date": ""}, {"sum": 150000.0, "com": "", "date": ""}, {"sum": 1000000.0, "com": "2026-05-21 00:00:00", "date": ""}], "adm-4": [{"sum": 90000.0, "com": "8 чел жол", "date": ""}, {"sum": 58000.0, "com": "узбеки новые жол", "date": ""}, {"sum": 25000.0, "com": "постель новым", "date": ""}, {"sum": 32800.0, "com": "матрас новые узб", "date": ""}, {"sum": 140000.0, "com": "прод янв", "date": ""}, {"sum": 38700.0, "com": "постель кровать", "date": ""}, {"sum": 50000.0, "com": "швеи дорога", "date": ""}, {"sum": 315165.0, "com": "общага узб янв", "date": ""}, {"sum": 5500.0, "com": "матрасы", "date": ""}, {"sum": 52000.0, "com": "узб дорога", "date": ""}, {"sum": 75000.0, "com": "хайр почки аванс", "date": ""}, {"sum": 60000.0, "com": "хайр почки аванс", "date": ""}, {"sum": 325000.0, "com": "докум узб от нас", "date": ""}, {"sum": 2040.0, "com": "документы", "date": ""}, {"sum": 400000.0, "com": "хайр аванс 24 февр", "date": ""}, {"sum": 2600.0, "com": "документы", "date": ""}, {"sum": 70000.0, "com": "дорога швеи 2 марта аванс", "date": ""}, {"sum": 140000.0, "com": "продукты", "date": ""}, {"sum": 15000.0, "com": "докум", "date": ""}, {"sum": 140000.0, "com": "продукт март", "date": ""}, {"sum": 280000.0, "com": "докум узб новые 26 март", "date": ""}, {"sum": 15000.0, "com": "такси узб", "date": ""}, {"sum": 140000.0, "com": "продукты", "date": ""}, {"sum": 70000.0, "com": "докум март", "date": ""}, {"sum": 64500.0, "com": "узб дорога и комисс", "date": ""}, {"sum": 140000.0, "com": "продукт апрель", "date": ""}, {"sum": 10000.0, "com": "такс туда обр гран", "date": ""}, {"sum": 140000.0, "com": "прод апр", "date": ""}, {"sum": 140000.0, "com": "продукт", "date": ""}], "adm-5": [{"sum": 125000.0, "com": "мумин янв", "date": ""}, {"sum": 50000.0, "com": "техн янв", "date": ""}, {"sum": 50000.0, "com": "менедж янв", "date": ""}, {"sum": 250000.0, "com": "хайр янв", "date": ""}, {"sum": 250000.0, "com": "хайр февр", "date": ""}, {"sum": 125000.0, "com": "оф мен", "date": ""}, {"sum": 50000.0, "com": "техн февр", "date": ""}, {"sum": 125000.0, "com": "абдульм", "date": ""}, {"sum": 45000.0, "com": "швеи дорога", "date": ""}, {"sum": 250000.0, "com": "хайрула", "date": ""}, {"sum": 125000.0, "com": "оф мен", "date": ""}, {"sum": 50000.0, "com": "уборщ", "date": ""}, {"sum": 125000.0, "com": "абдульмумин", "date": ""}, {"sum": 104000.0, "com": "робин", "date": ""}, {"sum": 45000.0, "com": "швеи жол", "date": ""}, {"sum": 250000.0, "com": "хайр март???", "date": ""}, {"sum": 125000.0, "com": "оф мен март", "date": ""}, {"sum": 50000.0, "com": "техн", "date": ""}, {"sum": 125000.0, "com": "абдульм март", "date": ""}, {"sum": 104000.0, "com": "робин март", "date": ""}, {"sum": 45000.0, "com": "жол швеял", "date": ""}, {"sum": 250000.0, "com": "хайр март???", "date": ""}, {"sum": 125000.0, "com": "офис мен март", "date": ""}, {"sum": 50000.0, "com": "техн март", "date": ""}, {"sum": 125000.0, "com": "абдульмум март", "date": ""}, {"sum": 104000.0, "com": "робин март", "date": ""}, {"sum": 30000.0, "com": "жол швея март", "date": ""}, {"sum": 250000.0, "com": "хайр апр", "date": ""}, {"sum": 125000.0, "com": "мен офис апр", "date": ""}, {"sum": 50000.0, "com": "техничк", "date": ""}, {"sum": 125000.0, "com": "абдульм", "date": ""}, {"sum": 104000.0, "com": "робин", "date": ""}, {"sum": 30000.0, "com": "жол швея апр", "date": ""}, {"sum": 15000.0, "com": "комисс снятие", "date": ""}, {"sum": 17000.0, "com": "комисс снятие", "date": ""}, {"sum": 250000.0, "com": "хайр апр", "date": ""}, {"sum": 125000.0, "com": "оф мен апр", "date": ""}, {"sum": 50000.0, "com": "убо апр", "date": ""}, {"sum": 125000.0, "com": "абдульм апр", "date": ""}, {"sum": 104000.0, "com": "робин апр", "date": ""}, {"sum": 30000.0, "com": "жол швея апр", "date": ""}, {"sum": 120000.0, "com": "конструктор апр", "date": ""}, {"sum": 250000.0, "com": "хайр май окл", "date": ""}, {"sum": 225000.0, "com": "констр май", "date": ""}, {"sum": 50000.0, "com": "техничк", "date": ""}, {"sum": 125000.0, "com": "абдульм", "date": ""}, {"sum": 104000.0, "com": "робин", "date": ""}, {"sum": 17500.0, "com": "швея жол", "date": ""}, {"sum": 150000.0, "com": "Анжелика май", "date": ""}, {"sum": 40000.0, "com": "% снятие", "date": ""}, {"sum": 100000.0, "com": "аванс хайрул 26 май", "date": ""}], "adm-6": [{"sum": 240055.0, "com": "общага дек", "date": ""}, {"sum": 70000.0, "com": "квартира 3 дек", "date": ""}, {"sum": 25000.0, "com": "склад аренд", "date": ""}, {"sum": 919385.0, "com": "аренда янв 26", "date": ""}, {"sum": 25000.0, "com": "склад февр", "date": ""}, {"sum": 55764.0, "com": "ком усл янв", "date": ""}, {"sum": 263359.0, "com": "ком усл янв", "date": ""}, {"sum": 54895.0, "com": "аренд дек", "date": ""}, {"sum": 49105.0, "com": "аренд склад доп", "date": ""}, {"sum": 711385.0, "com": "аренда февр", "date": ""}, {"sum": 205000.0, "com": "ком усл февр", "date": ""}, {"sum": 388000.0, "com": "общага узб март", "date": ""}, {"sum": 148036.0, "com": "ком усл узб", "date": ""}, {"sum": 220000.0, "com": "ком усл март", "date": ""}, {"sum": 815385.0, "com": "аренд март", "date": ""}, {"sum": 394679.0, "com": "узб аренда", "date": ""}, {"sum": 179000.0, "com": "элект ком усл", "date": ""}, {"sum": 401000.0, "com": "узбеки общага", "date": ""}, {"sum": 64368.0, "com": "отопление апр", "date": ""}, {"sum": 815385.0, "com": "аренда арпель", "date": ""}, {"sum": 22756.0, "com": "вода апрель", "date": ""}, {"sum": 88492.0, "com": "ком усл апр", "date": ""}], "adm-7": [{"sum": 4000.0, "com": "дост машинок", "date": ""}, {"sum": 12000.0, "com": "запч для машин", "date": ""}, {"sum": 1375000.0, "com": "принтер лекало машинка", "date": ""}, {"sum": 13000.0, "com": "интернет", "date": ""}, {"sum": 730000.0, "com": "ноут для лекало прога", "date": ""}, {"sum": 3700.0, "com": "дост комп от таса", "date": ""}, {"sum": 84600.0, "com": "запч бишкек", "date": ""}, {"sum": 22600.0, "com": "краска для плоттер", "date": ""}, {"sum": 4280.0, "com": "кранштейн кондер", "date": ""}, {"sum": 42600.0, "com": "бумага для лекал", "date": ""}, {"sum": 25000.0, "com": "уст кондера", "date": ""}, {"sum": 5400.0, "com": "комиссия", "date": ""}, {"sum": 6000.0, "com": "плоттер дост", "date": ""}, {"sum": 5000.0, "com": "су", "date": ""}, {"sum": 3850.0, "com": "дост лекало бум", "date": ""}, {"sum": 10000.0, "com": "дост петли", "date": ""}, {"sum": 70000.0, "com": "прога конструкт", "date": ""}, {"sum": 5000.0, "com": "удлинитель", "date": ""}, {"sum": 5000.0, "com": "су", "date": ""}, {"sum": 15000.0, "com": "печати в цех", "date": ""}, {"sum": 45000.0, "com": "ремонт машинок", "date": ""}, {"sum": 6000.0, "com": "су", "date": ""}, {"sum": 1636400.0, "com": "машинки и оверлог Кырг", "date": ""}, {"sum": 40000.0, "com": "комиссия снятие", "date": ""}, {"sum": 130000.0, "com": "дост машинки", "date": ""}, {"sum": 50000.0, "com": "программа для лекал", "date": ""}, {"sum": 5000.0, "com": "су", "date": ""}, {"sum": 10000.0, "com": "дезинфекц", "date": ""}, {"sum": 4000.0, "com": "дост печати", "date": ""}, {"sum": 30510.0, "com": "бум плоттер", "date": ""}, {"sum": 13000.0, "com": "интернет", "date": ""}, {"sum": 60000.0, "com": "стригальн машина", "date": ""}, {"sum": 30000.0, "com": "перфоратор", "date": ""}], "adm-8": [{"sum": 17500.0, "com": "проезд татешки", "date": ""}, {"sum": 7500.0, "com": "", "date": ""}, {"sum": 20000.0, "com": "дост камуфл форма", "date": ""}, {"sum": 42000.0, "com": "стол для отк", "date": ""}, {"sum": 13000.0, "com": "интернет алмата", "date": ""}, {"sum": 12000.0, "com": "интернет алмата", "date": ""}, {"sum": 18000.0, "com": "хай фай цех", "date": ""}, {"sum": 260925.0, "com": "отчисл 4 кв 25год", "date": ""}, {"sum": 3000.0, "com": "дост зпач", "date": ""}, {"sum": 10000.0, "com": "запч", "date": ""}, {"sum": 8000.0, "com": "дост вахид кровать и тд", "date": ""}, {"sum": 35360.0, "com": "запч цех", "date": ""}, {"sum": 220000.0, "com": "столы в цех новые", "date": ""}, {"sum": 6000.0, "com": "ремонт машинк", "date": ""}, {"sum": 15000.0, "com": "дост машиинок", "date": ""}, {"sum": 3000.0, "com": "дог аренды талд дост", "date": ""}, {"sum": 250000.0, "com": "реестр предоплата", "date": ""}, {"sum": 5410.0, "com": "уборка", "date": ""}, {"sum": 3000.0, "com": "реестр рукав", "date": ""}, {"sum": 1830.0, "com": "реест рукав", "date": ""}, {"sum": 70000.0, "com": "цех меттал", "date": ""}, {"sum": 6000.0, "com": "запч", "date": ""}, {"sum": 10000.0, "com": "дост столы", "date": ""}, {"sum": 1229000.0, "com": "швейн машинки (оплочен)", "date": ""}, {"sum": 13000.0, "com": "сборка машинок", "date": ""}, {"sum": 10000.0, "com": "дост машинок", "date": ""}, {"sum": 105600.0, "com": "стол кройный", "date": ""}, {"sum": 156850.0, "com": "столы кровати узб", "date": ""}, {"sum": 13910.0, "com": "стол в офис", "date": ""}, {"sum": 6000.0, "com": "вода", "date": ""}, {"sum": 140000.0, "com": "еда февр", "date": ""}, {"sum": 3700.0, "com": "канц товар", "date": ""}, {"sum": 50000.0, "com": "механик", "date": ""}, {"sum": 50000.0, "com": "дост вышив машинк", "date": ""}, {"sum": 13000.0, "com": "интернет", "date": ""}, {"sum": 45000.0, "com": "механик", "date": ""}, {"sum": 10000.0, "com": "оборудов дост грузч", "date": ""}, {"sum": 15000.0, "com": "вышивк настройка", "date": ""}, {"sum": 2608000.0, "com": "оборудов вахид предопл", "date": ""}, {"sum": 6850.0, "com": "запчасти", "date": ""}, {"sum": 48440.0, "com": "бумага для этикеток", "date": ""}, {"sum": 3200.0, "com": "этикетки дост", "date": ""}, {"sum": 4200.0, "com": "бейджик", "date": ""}, {"sum": 16000.0, "com": "канц товар", "date": ""}, {"sum": 6000.0, "com": "cу", "date": ""}, {"sum": 57400.0, "com": "освещение", "date": ""}, {"sum": 3000.0, "com": "бейджик", "date": ""}, {"sum": 3500.0, "com": "перевод комисс", "date": ""}, {"sum": 40000.0, "com": "механик", "date": ""}, {"sum": 97500.0, "com": "стройматер цех", "date": ""}, {"sum": 12000.0, "com": "стройматер цех", "date": ""}, {"sum": 50000.0, "com": "8 март ашок", "date": ""}, {"sum": 2500.0, "com": "цветы дост", "date": ""}, {"sum": 147000.0, "com": "оборудов для читски ниток", "date": ""}, {"sum": 8000.0, "com": "цветы", "date": ""}, {"sum": 82000.0, "com": "матрас", "date": ""}, {"sum": 5000.0, "com": "вода", "date": ""}, {"sum": 20000.0, "com": "комиссия оклад", "date": ""}, {"sum": 13000.0, "com": "интернет", "date": ""}, {"sum": 222300.0, "com": "китай заказ Вахид обрудов отдали", "date": ""}, {"sum": 5000.0, "com": "су", "date": ""}, {"sum": 102000.0, "com": "столы в цех", "date": ""}, {"sum": 6000.0, "com": "су", "date": ""}, {"sum": 2500.0, "com": "бейджик", "date": ""}, {"sum": 67000.0, "com": "вышивк стол", "date": ""}, {"sum": 2800.0, "com": "дост картридж", "date": ""}, {"sum": 6000.0, "com": "картридж дост", "date": ""}, {"sum": 10000.0, "com": "дост вахид машинк", "date": ""}, {"sum": 6000.0, "com": "су", "date": ""}, {"sum": 8000.0, "com": "Дост с вахида", "date": ""}, {"sum": 49000.0, "com": "вышивка запч", "date": ""}, {"sum": 8285.0, "com": "аптечк", "date": ""}, {"sum": 34000.0, "com": "чистка аппрата дост", "date": ""}, {"sum": 2550.0, "com": "дост оборуд", "date": ""}, {"sum": 2400.0, "com": "вышив маш запч", "date": ""}, {"sum": 40400.0, "com": "петл для вышивк", "date": ""}, {"sum": 52850.0, "com": "кит иглы закуп", "date": ""}, {"sum": 6820.0, "com": "дост машинк вахид", "date": ""}, {"sum": 6000.0, "com": "су", "date": ""}, {"sum": 10000.0, "com": "вышивка вахид", "date": ""}, {"sum": 4000.0, "com": "индус такси", "date": ""}], "adm-9": [{"sum": 23085.0, "com": "столы", "date": ""}, {"sum": 12800.0, "com": "канц товар", "date": ""}, {"sum": 8000.0, "com": "интерн", "date": ""}, {"sum": 24000.0, "com": "мп сайт", "date": ""}, {"sum": 109500.0, "com": "аренда офис", "date": ""}, {"sum": 8000.0, "com": "интерн", "date": ""}, {"sum": 127925.0, "com": "отчисл дн казд", "date": ""}, {"sum": 3000.0, "com": "вода", "date": ""}, {"sum": 70400.0, "com": "налоги днказ", "date": ""}, {"sum": 43250.0, "com": "нотар днказд", "date": ""}, {"sum": 148000.0, "com": "налоги казд дн", "date": ""}, {"sum": 4300.0, "com": "нотар днказд", "date": ""}, {"sum": 12000.0, "com": "нотар днказд", "date": ""}, {"sum": 140000.0, "com": "налоги днказд", "date": ""}, {"sum": 109500.0, "com": "аренд оф февр", "date": ""}, {"sum": 40000.0, "com": "нотар днказд", "date": ""}, {"sum": 284600.0, "com": "отчисл янв февр", "date": ""}, {"sum": 50000.0, "com": "ткань Тимка кнб", "date": ""}, {"sum": 3410.0, "com": "такс акт сверки", "date": ""}, {"sum": 4400.0, "com": "дост кнб", "date": ""}, {"sum": 3000.0, "com": "дост кнб", "date": ""}, {"sum": 10000.0, "com": "1с настройка", "date": ""}, {"sum": 166500.0, "com": "тендер бот", "date": ""}, {"sum": 32252.0, "com": "кнб дост тимка", "date": ""}, {"sum": 90000.0, "com": "билет аст алм", "date": ""}, {"sum": 80000.0, "com": "кнб пошив", "date": ""}, {"sum": 16000.0, "com": "кит поездка", "date": ""}, {"sum": 50000.0, "com": "кит поездка", "date": ""}, {"sum": 14000.0, "com": "кит поездка", "date": ""}, {"sum": 442924.0, "com": "кит поездка", "date": ""}, {"sum": 147000.0, "com": "билет русл", "date": ""}, {"sum": 289000.0, "com": "билет китай", "date": ""}, {"sum": 109500.0, "com": "аренда офис", "date": ""}, {"sum": 158000.0, "com": "кит поездка", "date": ""}, {"sum": 70500.0, "com": "кит поездка", "date": ""}, {"sum": 190800.0, "com": "скинули с кажд кит", "date": ""}, {"sum": 102277.0, "com": "гост гуанчж", "date": ""}, {"sum": 36000.0, "com": "кит поездка", "date": ""}, {"sum": 67000.0, "com": "кпн 25год", "date": ""}, {"sum": 78540.0, "com": "кит поезд", "date": ""}, {"sum": 48000.0, "com": "кит билет", "date": ""}, {"sum": 342000.0, "com": "кит билет", "date": ""}, {"sum": 13000.0, "com": "кит поездка", "date": ""}, {"sum": 40000.0, "com": "кит поездка", "date": ""}, {"sum": 15000.0, "com": "кит", "date": ""}, {"sum": 30000.0, "com": "перерегистр иои", "date": ""}, {"sum": 185725.0, "com": "отчисл март", "date": ""}, {"sum": 109500.0, "com": "апрель аренда", "date": ""}, {"sum": 8000.0, "com": "интерн", "date": ""}, {"sum": 105975.0, "com": "налоги каздемеу апрель", "date": ""}, {"sum": 100000.0, "com": "Бизнес план", "date": ""}, {"sum": 208000.0, "com": "линия бг казд", "date": ""}, {"sum": 50000.0, "com": "линия бг казд", "date": ""}, {"sum": 496925.0, "com": "отчисл инвад по апрель", "date": ""}, {"sum": 50000.0, "com": "отчисл инв % май", "date": ""}], "adm-10": [{"sum": 42000.0, "com": "синтепон остатк", "date": ""}], "adm-11": [{"sum": 15000.0, "com": "енбек трикотаж дост возврат", "date": ""}, {"sum": 155670.0, "com": "казпласт по акт сверки", "date": ""}, {"sum": 60000.0, "com": "дорога бишк трикотаж возврат", "date": ""}, {"sum": 12000.0, "com": "дост авиа трикот", "date": ""}, {"sum": 19049.0, "com": "пеня шабит маек", "date": ""}, {"sum": 842952.0, "com": "пеня шабит маек", "date": ""}], "adm-12": [{"sum": 100000.0, "com": "рустем гос закуп аванс", "date": ""}, {"sum": 400000.0, "com": "бухг янв", "date": ""}, {"sum": 352355.0, "com": "% Асха", "date": ""}, {"sum": 100000.0, "com": "зп юрист", "date": ""}, {"sum": 100000.0, "com": "руст зп", "date": ""}, {"sum": 100000.0, "com": "руст зп февр", "date": ""}, {"sum": 400000.0, "com": "бухг февраль", "date": ""}, {"sum": 100000.0, "com": "юрист февр", "date": ""}, {"sum": 100000.0, "com": "руст февр", "date": ""}, {"sum": 20000.0, "com": "бухг Жанар", "date": ""}, {"sum": 500000.0, "com": "бухг март", "date": ""}, {"sum": 100000.0, "com": "юрист апрель", "date": ""}, {"sum": 100000.0, "com": "руст аванс апр", "date": ""}, {"sum": 700000.0, "com": "бухг апрель", "date": ""}, {"sum": 100000.0, "com": "руст апрель", "date": ""}, {"sum": 700000.0, "com": "бухг апр", "date": ""}, {"sum": 100000.0, "com": "мусл зп апр", "date": ""}, {"sum": 100000.0, "com": "рустем зп май", "date": ""}, {"sum": 200000.0, "com": "Эксперт", "date": ""}], "adm-13": [{"sum": 100000.0, "com": "униф жилет%", "date": ""}], "adm-14": [{"sum": 13000.0, "com": "смена тоо назв", "date": ""}, {"sum": 14000.0, "com": "печати новые", "date": ""}, {"sum": 5000.0, "com": "1с", "date": ""}, {"sum": 240000.0, "com": "портал 26год", "date": ""}, {"sum": 22000.0, "com": "печать дост", "date": ""}, {"sum": 40000.0, "com": "кост билет", "date": ""}, {"sum": 16000.0, "com": "кост билет", "date": ""}, {"sum": 200000.0, "com": "бухг март", "date": ""}, {"sum": 800.0, "com": "дост докум", "date": ""}, {"sum": 10000.0, "com": "прэк серт", "date": ""}, {"sum": 2000.0, "com": "справки евраз", "date": ""}, {"sum": 30000.0, "com": "етс оплата", "date": ""}]};
+let admCats  = ls('kd2_admcats', DEFAULT_ADM_CATS);
+let admRows  = ls('kd2_admrows', DEFAULT_ADM_ROWS);
+function saveAdmCats(){ lsw('kd2_admcats', admCats); fbSaveAll(); }
+function saveAdmRows(){ lsw('kd2_admrows', admRows); fbSaveAll(); }
+
+
+
+// Shift+wheel = horizontal scroll in adm table
+document.addEventListener('wheel', function(e){
+  if(!e.shiftKey) return;
+  const el = document.getElementById('admScroll');
+  if(!el) return;
+  e.preventDefault();
+  el.scrollBy({left: e.deltaY * 3, behavior: 'smooth'});
+}, {passive: false});
+
+// ADM column drag
+let admDragSrcId = null;
+function admColDragStart(e, catId){
+  admDragSrcId = catId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '.5';
+}
+function admColDragOver(e, catId){
+  e.preventDefault();
+  document.querySelectorAll('.adm-th-drag').forEach(el=>el.classList.remove('adm-th-drag-over'));
+  if(catId !== admDragSrcId) e.currentTarget.classList.add('adm-th-drag-over');
+}
+function admColDrop(e, targetId){
+  e.preventDefault();
+  document.querySelectorAll('.adm-th-drag').forEach(el=>el.classList.remove('adm-th-drag-over'));
+  if(!admDragSrcId || admDragSrcId === targetId) return;
+  const srcIdx = admCats.findIndex(c=>c.id===admDragSrcId);
+  const tgtIdx = admCats.findIndex(c=>c.id===targetId);
+  if(srcIdx<0||tgtIdx<0) return;
+  const [moved] = admCats.splice(srcIdx,1);
+  admCats.splice(tgtIdx,0,moved);
+  saveAdmCats();
+  admDragSrcId = null;
+  goPage('adm');
+}
+function admColDragEnd(){
+  admDragSrcId = null;
+  document.querySelectorAll('.adm-th-drag').forEach(el=>{el.style.opacity='';el.classList.remove('adm-th-drag-over');});
+}
+
+// ADM column resize
+let admResizing = null;
+const ADM_WIDTHS_KEY = 'kd2_adm_widths';
+let admColWidths = JSON.parse(localStorage.getItem(ADM_WIDTHS_KEY)||'{}');
+
+function admResizerStart(e, catId){
+  e.preventDefault(); e.stopPropagation();
+  const th = e.target.closest('th');
+  admResizing = {catId, th, startX: e.clientX, startW: th.getBoundingClientRect().width};
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
+document.addEventListener('mousemove', e=>{
+  if(!admResizing) return;
+  const w = Math.max(140, admResizing.startW + (e.clientX - admResizing.startX));
+  admResizing.th.style.minWidth = w+'px';
+  admResizing.th.style.width = w+'px';
+  // apply to data cells in same column
+  const idx = admCats.findIndex(c=>c.id===admResizing.catId);
+  document.querySelectorAll('#admTable tbody tr').forEach(tr=>{
+    const td = tr.children[idx+1]; // +1 for # column
+    if(td){ td.style.minWidth=w+'px'; td.style.width=w+'px'; }
+  });
+});
+document.addEventListener('mouseup', e=>{
+  if(!admResizing) return;
+  admColWidths[admResizing.catId] = admResizing.th.getBoundingClientRect().width;
+  localStorage.setItem(ADM_WIDTHS_KEY, JSON.stringify(admColWidths));
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  admResizing = null;
+});
+
+function admAddCat(){
+  const name = prompt('Название категории (например: Транспорт):');
+  if(!name||!name.trim()) return;
+  const id = 'cat-'+Date.now();
+  admCats.push({id, name:name.trim()});
+  saveAdmCats();
+  goPage('adm');
+}
+function admDelCat(id){
+  if(!confirm('Удалить категорию и все её записи?')) return;
+  admCats = admCats.filter(c=>c.id!==id);
+  delete admRows[id];
+  saveAdmCats(); saveAdmRows();
+  goPage('adm');
+}
+function admEditCat(id){
+  const cat = admCats.find(c=>c.id===id);
+  if(!cat) return;
+  const name = prompt('Новое название:', cat.name);
+  if(!name||!name.trim()) return;
+  cat.name = name.trim();
+  saveAdmCats();
+  goPage('adm');
+}
+function admAddRow(catId){
+  const sumEl = document.getElementById('adm-sum-'+catId);
+  const comEl = document.getElementById('adm-com-'+catId);
+  const s = parseFloat((sumEl.value||'').replace(/\s/g,'').replace(',','.'));
+  const c = (comEl.value||'').trim();
+  if(!s||s<=0){ sumEl.style.borderColor='red'; return; }
+  if(!admRows[catId]) admRows[catId]=[];
+  admRows[catId].push({sum:s, com:c, date:new Date().toLocaleDateString('ru-RU')});
+  saveAdmRows();
+  sumEl.value=''; comEl.value='';
+  goPage('adm');
+}
+function admDelRow(catId, idx){
+  admRows[catId].splice(idx,1);
+  saveAdmRows();
+  goPage('adm');
+}
+
+
+// ─── GROK AI ─────────────────────────────────────────────────────────────────
+const GROK_KEY = 'xai-ZYQCQn0x8Nof5NOFw1H58tpcjAwgjOOns8rFiVhXbAbNSmoTo87V3z2V44nXTmNs4tJxscvRVXYR1Uq9';
+let grokHistory = [];
+
+function toggleGrok(){
+  const p = document.getElementById('grokPanel');
+  p.classList.toggle('open');
+}
+
+function getDataContext(){
+  const data = allData();
+  const paid = data.filter(r=>r.costs==='опл');
+  const unpaid = data.filter(r=>r.costs!=='опл');
+  const totalSum = data.reduce((s,r)=>s+r.totalNum,0);
+  const paidSum = paid.reduce((s,r)=>s+r.totalNum,0);
+  const costsTotal = data.reduce((s,r)=>s+getCosts(r.id).reduce((ss,c)=>ss+c.sum,0),0);
+  const contractList = data.slice(0,20).map(r=>'- '+r.id+': '+r.org+', '+r.item+', '+r.qty+' шт, '+r.total+', '+(r.costs==='опл'?'ОПЛАЧЕНО':'НЕ ОПЛАЧЕНО')+', '+r.location).join('\n');
+  const admList = admCats.map(c=>{const t=(admRows[c.id]||[]).reduce((s,r)=>s+r.sum,0);return '- '+c.name+': '+fmtN(t);}).join('\n');
+  return 'Данные системы КазДемеу:\n'+
+    'Всего договоров: '+data.length+'\n'+
+    'Оплачено: '+paid.length+' на сумму '+fmtN(paidSum)+'\n'+
+    'Не оплачено: '+unpaid.length+' на сумму '+fmtN(totalSum-paidSum)+'\n'+
+    'Общая сумма: '+fmtN(totalSum)+'\n'+
+    'Затраты: '+fmtN(costsTotal)+'\n'+
+    'Чистая прибыль: '+fmtN(paidSum-costsTotal)+'\n\n'+
+    'Список договоров (первые 20):\n'+contractList+
+    (data.length>20?'\n...и ещё '+(data.length-20)+' договоров':'')+
+    '\n\nАдминистративные расходы:\n'+admList;
+}
+
+async function grokSend(){
+  const inp = document.getElementById('grokInput');
+  const msg = (inp.value||'').trim();
+  if(!msg) return;
+  inp.value = '';
+  await grokAsk(msg);
+}
+
+async function grokAsk(question){
+  const msgs = document.getElementById('grokMessages');
+  const btn = document.getElementById('grokSendBtn');
+
+  // Add user message
+  msgs.innerHTML += `<div class="grok-msg user">${question}</div>`;
+  msgs.innerHTML += `<div class="grok-msg ai loading" id="grokLoading">⏳ Думаю...</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = true;
+
+  grokHistory.push({role:'user', content: question});
+
+  try{
+    const systemPrompt = `Ты AI-ассистент системы управления договорами КазДемеу. 
+Отвечай кратко и по делу на русском языке.
+Вот актуальные данные системы:
+
+${getDataContext()}`;
+
+    const resp = await fetch('https://api.x.ai/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+GROK_KEY
+      },
+      body: JSON.stringify({
+        model: 'grok-3-mini',
+        messages:[
+          {role:'system', content: systemPrompt},
+          ...grokHistory.slice(-10)
+        ],
+        max_tokens: 1200,
+        temperature: 0.7
+      })
+    });
+
+    const data = await resp.json();
+    const answer = data.choices?.[0]?.message?.content || 'Ошибка получения ответа';
+    
+    grokHistory.push({role:'assistant', content: answer});
+
+    const formatted = answer
+      .split('\n').join('<br>')
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.*?)\*/g, '<i>$1</i>');
+    document.getElementById('grokLoading').outerHTML = 
+      `<div class="grok-msg ai">${formatted}</div>`;
+  } catch(e){
+    document.getElementById('grokLoading').outerHTML = 
+      `<div class="grok-msg ai" style="color:#dc2626">❌ Ошибка: ${e.message}</div>`;
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = false;
+}
+
+
+function applyFbData(val){
+  if(val.extra) { extra = val.extra; lsw('kd2_extra', extra); }
+  if(val.deleted) { deleted = new Set(val.deleted); lsw('kd2_del', [...deleted]); }
+  if(val.costs) { costsDB = val.costs; lsw('kd2_costs', costsDB); }
+  if(val.files) { filesDB = val.files; lsw('kd2_files', filesDB); }
+  if(val.status) { statusDB = val.status; lsw('kd2_status', statusDB); }
+  if(val.admCats) { admCats = val.admCats; lsw('kd2_admcats', admCats); }
+  if(val.admRows) { admRows = val.admRows; lsw('kd2_admrows', admRows); }
+  alert('✅ Данные загружены из Firebase!');
+  goPage(page);
+}
+
+
+
+// === ВИДИМОСТЬ ДОГОВОРОВ (только админ) ===
+let hiddenContracts = new Set(ls('kd2_hidden_contracts', []));
+function saveHiddenContracts(){ lsw('kd2_hidden_contracts', [...hiddenContracts]); }
+
+function toggleContractVisibility(id){
+  if(role !== 'admin') return;
+  if(hiddenContracts.has(id)) hiddenContracts.delete(id);
+  else hiddenContracts.add(id);
+  saveHiddenContracts();
+  renderTable();
+}
+
+function isVisible(id){
+  if(role === 'admin') return true; // admin sees all
+  return !hiddenContracts.has(id);
+}
+
+// === УПРАВЛЕНИЕ ПАРОЛЯМИ (только админ) ===
+function openPasswordSettings(){
+  if(role !== 'admin'){ alert('Доступно только администратору'); return; }
+  const roleNames = {manager:'Менеджер',constructor:'Конструктор',technolog:'Технолог',logist:'Логист',goszakup:'Госзакупщик'};
+  let html2 = '<div style="font-family:Inter,sans-serif;padding:24px;max-width:480px">';
+  html2 += '<h2 style="margin-bottom:20px;color:#0f1923">🔑 Управление паролями</h2>';
+  html2 += '<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:#92400e">⚠️ Пароль администратора менять нельзя</div>';
+  Object.keys(roleNames).forEach(r=>{
+    html2 += `<div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b7280;margin-bottom:4px">${roleNames[r]}</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="newpass-${r}" value="${ROLE_PASSWORDS[r]}" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px">
+      </div>
+    </div>`;
+  });
+  html2 += '<button onclick="savePasswordsFromModal()" style="width:100%;padding:12px;background:#1a56db;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✓ Сохранить пароли</button>';
+  html2 += '</div>';
+  const win = window.open('','_blank','width=520,height=580');
+  win.document.write(html2);
+  win._savePasswords = function(){
+    Object.keys(roleNames).forEach(r=>{
+      const el = win.document.getElementById('newpass-'+r);
+      if(el && el.value.trim()) ROLE_PASSWORDS[r] = el.value.trim();
+    });
+    savePasswords();
+    win.alert('✅ Пароли сохранены!');
+    win.close();
+  };
+  win.document.querySelector('button[onclick="savePasswordsFromModal()"]').onclick = win._savePasswords;
+}
+function savePasswordsFromModal(){} // placeholder
+
+// ─── SYNC BETWEEN TABS ────────────────────────────────────────────────────────
+window.addEventListener('storage', function(e){
+  // Reload data from localStorage when changed in another tab
+  if(['kd2_costs','kd2_status','kd2_extra','kd2_del','kd2_files','kd2_admcats','kd2_admrows'].includes(e.key)){
+    costsDB  = ls('kd2_costs',{});
+    statusDB = ls('kd2_status',{});
+    extra    = ls('kd2_extra',[]);
+    deleted  = new Set(ls('kd2_del',[]));
+    filesDB  = ls('kd2_files',{});
+    admCats  = ls('kd2_admcats',[]);
+    admRows  = ls('kd2_admrows',{});
+    // re-render current page
+    if(page==='a') renderAnalytics(document.getElementById('main'));
+    else if(page==='f') renderFinance(document.getElementById('main'));
+    else renderTable();
+  }
+});
+
+
+
+
+// Auto-open if launched as analytics/finance tab
+const _hash = window.location.hash.replace('#','');
+const _kd2open = _hash ? ls('kd2_open', null) : null;
+if(_kd2open && _kd2open.p && _kd2open.r && (_hash === _kd2open.p)){
+  lsw('kd2_open', null);
+  window._openPage(_kd2open.p, _kd2open.r);
+} else {
+  initLogin();
+}
+</script>
+</body>
+</html>
