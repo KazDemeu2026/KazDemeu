@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КазДемеу — Система управления договорами</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lcard">
+    <div class="llogo">
+      <div class="li">🏭</div>
+      <h1>КазДемеу</h1>
+      <p>Система управления договорами</p>
+    </div>
+    <div class="rlist" id="rlist"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()" disabled>Войти</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🏭 КазДемеу</div>
+    <div class="t-badge" id="tbadge"></div>
+    <div class="t-right">
+      <div class="zc">
+        <button class="zb" onclick="zoom(-1)">−</button>
+        <span class="zl" id="zlbl">100%</span>
+        <button class="zb" onclick="zoom(1)">+</button>
+        <button class="zb" onclick="zoom(0)">↺</button>
+      </div>
+      <button class="exp-btn" onclick="exportData()">💾 Экспорт</button>
+      <label class="exp-btn"><input type="file" accept=".json" onchange="importData(event)" style="display:none">📂 Импорт</label>
+      <span id="sbStatus" style="font-size:11px;color:#94a3b8">⏳</span>
+      <button class="tb purple" onclick="toggleGrok()">🤖 Grok AI</button>
+      <button class="tb yellow" id="btnPassSettings" style="display:none" onclick="openPasswordSettings()">🔑 Пароли</button>
+      <button class="tb" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+  <div id="app-inner" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
+    <div class="navtabs" id="navtabs" style="display:none"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<!-- GROK PANEL -->
+<div id="grokPanel">
+  <div class="grok-header">
+    <div class="grok-title">🤖 Grok AI <span style="font-size:11px;background:#334155;padding:2px 8px;border-radius:999px;font-weight:400">онлайн</span></div>
+    <button class="grok-close" onclick="toggleGrok()">✕</button>
+  </div>
+  <div class="grok-messages" id="grokMessages">
+    <div class="grok-msg ai">Привет! Я знаю все ваши договора и расходы. Спросите меня!</div>
+  </div>
+  <div class="grok-input-area">
+    <div class="grok-quick">
+      <button onclick="grokAsk('Сколько договоров и общая сумма?')">📊 Итоги</button>
+      <button onclick="grokAsk('Какие договора не оплачены?')">❌ Дебиторка</button>
+      <button onclick="grokAsk('Топ 5 дорогих договоров')">💰 Топ</button>
+      <button onclick="grokAsk('Проанализируй финансы')">📈 Анализ</button>
+      <button onclick="grokAsk('Какие риски есть?')">⚠️ Риски</button>
+    </div>
+    <div class="grok-input-row">
+      <input type="text" class="grok-input" id="grokInput" placeholder="Спросите Grok..." onkeydown="if(event.key==='Enter')grokSend()">
+      <button class="grok-send" id="grokSendBtn" onclick="grokSend()">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCROLL NAV -->
+<div class="snav" id="snav" style="display:none">
+  <button onclick="scrollTbl(-300)">▲</button>
+  <button onclick="scrollTbl(300)">▼</button>
+</div>
+
+<!-- SCRIPTS -->
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="contracts.js"></script>
+<script src="analytics.js"></script>
+<script src="expenses.js"></script>
+<script src="grok.js"></script>
+<script src="app.js"></script>
+
+<script>
+'use strict';
+
+// Check status on load
+async function checkSupabase() {
+  const btn = document.getElementById('sbStatus');
+  try {
+    await supabase.query('contracts', { select: 'id', limit: 1 });
+    if (btn) { btn.textContent = '🟢 DB'; btn.style.color = '#86efac'; }
+  } catch(e) {
+    if (btn) { btn.textContent = '🔴 DB'; btn.style.color = '#fca5a5'; }
+  }
+}
+
+// Init
+initLogin();
+
+// Check DB connection after page loads
+window.addEventListener('load', () => {
+  checkSupabase();
+  // Handle hash routing for analytics/finance tabs
+  const hash = window.location.hash.replace('#', '');
+  if (hash && ['analytics', 'finance'].includes(hash)) {
+    const open = ls('kd_open', null);
+    if (open && open.r) {
+      currentRole = open.r;
+      lsw('kd_open', null);
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      document.getElementById('tbadge').textContent = ROLES[currentRole].l;
+      document.getElementById('tbadge').style.cssText = BADGES[currentRole];
+      document.getElementById('snav').style.display = 'flex';
+      document.getElementById('navtabs').style.display = 'flex';
+      document.getElementById('navtabs').innerHTML = `
+        <span class="ntab" onclick="window.close()" style="color:#f87171;cursor:pointer">← Назад</span>
+        <span class="ntab active">${hash === 'analytics' ? '📊 Аналитика' : '💰 Финансы'}</span>
+        <span class="ntab" onclick="location.reload()" style="color:#60a5fa">🔄 Обновить</span>`;
+      applyZoom();
+      loadAllData().then(() => {
+        const m = document.getElementById('main');
+        if (hash === 'analytics') renderAnalyticsPage(m);
+        else renderFinancePage(m);
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>
