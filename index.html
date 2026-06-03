@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КазДемеу — Система управления договорами</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== КАЗDEMEU STYLES ===== */
+:root {
+  --bg: #f1f5f9;
+  --bg2: #ffffff;
+  --dark: #0f1923;
+  --dark2: #1e293b;
+  --accent: #1a56db;
+  --accent2: #15803d;
+  --danger: #dc2626;
+  --warn: #d97706;
+  --text: #111827;
+  --text2: #6b7280;
+  --border: #e5e7eb;
+  --radius: 8px;
+  --topbar-h: 48px;
+  --navtab-h: 36px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); }
+
+/* ===== LOGIN ===== */
+#loginWrap {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #0f1923, #1a2d45, #0f3460);
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto; padding: 24px;
+}
+.lcard {
+  background: #fff; border-radius: 16px; padding: 32px;
+  width: 100%; max-width: 400px; margin: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+}
+.llogo { text-align: center; margin-bottom: 24px; }
+.llogo .li {
+  width: 56px; height: 56px; background: var(--dark);
+  border-radius: 14px; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 26px; margin-bottom: 10px;
+}
+.llogo h1 { font-size: 20px; font-weight: 700; }
+.llogo p { color: var(--text2); font-size: 12px; margin-top: 3px; }
+.rlist { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+.ritem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px; border: 2px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; transition: all .15s;
+}
+.ritem:hover, .ritem.on { border-color: var(--accent); background: #eff6ff; }
+.rico {
+  width: 34px; height: 34px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.rinfo b { display: block; font-size: 13px; font-weight: 600; }
+.rinfo span { font-size: 11px; color: var(--text2); }
+.lbtn {
+  width: 100%; padding: 11px; background: var(--accent);
+  color: #fff; border: none; border-radius: var(--radius);
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.lbtn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+/* ===== APP ===== */
+#app { position: fixed; inset: 0; display: none; flex-direction: column; }
+
+/* TOPBAR */
+.topbar {
+  height: var(--topbar-h); background: var(--dark); color: #fff;
+  display: flex; align-items: center; padding: 0 14px; gap: 10px;
+  flex-shrink: 0; z-index: 100;
+}
+.t-logo { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.t-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.t-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.tb {
+  padding: 4px 9px; border-radius: 5px; border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08); color: #fff; cursor: pointer;
+  font-size: 11px; font-family: inherit; white-space: nowrap;
+}
+.tb:hover { background: rgba(255,255,255,.16); }
+.tb.green { background: rgba(21,128,61,.25); border-color: rgba(21,128,61,.4); color: #86efac; }
+.tb.purple { background: rgba(99,102,241,.25); border-color: rgba(99,102,241,.5); color: #c4b5fd; }
+.tb.yellow { background: rgba(251,191,36,.15); border-color: rgba(251,191,36,.3); color: #fbbf24; }
+.zc { display: flex; align-items: center; gap: 3px; }
+.zb {
+  width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08); color: #fff; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.zl { font-size: 11px; color: #94a3b8; min-width: 30px; text-align: center; }
+
+/* NAV TABS */
+.navtabs {
+  height: var(--navtab-h); background: var(--dark2);
+  display: flex; align-items: center; padding: 0 14px; gap: 2px; flex-shrink: 0;
+}
+.ntab {
+  padding: 5px 13px; border-radius: 6px; cursor: pointer;
+  color: #94a3b8; font-size: 12px; font-weight: 500; transition: all .15s;
+}
+.ntab:hover { background: rgba(255,255,255,.08); color: #fff; }
+.ntab.active { background: rgba(26,86,219,.3); color: #fff; }
+.ntab.ext { color: #60a5fa; }
+
+/* MAIN */
+.main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+
+/* STATS */
+.stats { display: flex; gap: 8px; padding: 8px 14px 6px; flex-shrink: 0; overflow-x: auto; }
+.sc { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; min-width: 130px; flex-shrink: 0; }
+.sl { font-size: 10px; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .04em; }
+.sv { font-size: 18px; font-weight: 700; }
+.ss { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+
+/* BANNER */
+.banner { margin: 0 14px 6px; padding: 7px 12px; border-radius: 7px; font-size: 12px; display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.b-blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+.b-green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.b-purple { background: #f5f3ff; border: 1px solid #ddd6fe; color: #6d28d9; }
+.b-teal { background: #f0fdfa; border: 1px solid #99f6e4; color: #0f766e; }
+.b-orange { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; }
+.b-red { background: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
+
+/* TOOLBAR */
+.toolbar { display: flex; gap: 8px; padding: 0 14px 6px; flex-shrink: 0; flex-wrap: wrap; align-items: center; }
+.sbox { flex: 1; min-width: 180px; position: relative; }
+.sbox input { width: 100%; padding: 6px 11px 6px 28px; border: 1px solid var(--border); border-radius: 7px; font-size: 12px; font-family: inherit; background: var(--bg2); outline: none; }
+.sbox input:focus { border-color: var(--accent); }
+.si { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #9ca3af; }
+.fsel { padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 12px; font-family: inherit; background: var(--bg2); outline: none; }
+.btn { padding: 6px 13px; border-radius: 7px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-p { background: var(--accent); color: #fff; }
+.btn-p:hover { background: #1d4ed8; }
+.btn-g { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-g:hover { border-color: var(--accent); color: var(--accent); }
+
+/* TABLE */
+.twrap { flex: 1; overflow: hidden; margin: 0 14px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg2); display: flex; flex-direction: column; min-height: 0; }
+.thead-bar { padding: 7px 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.th-title { font-size: 13px; font-weight: 600; }
+.cnt { font-size: 11px; background: #f1f5f9; color: var(--text2); padding: 2px 8px; border-radius: 10px; }
+.tscroll { flex: 1; overflow: auto; min-height: 0; }
+
+/* SCROLLBAR */
+.tscroll::-webkit-scrollbar, .fpage::-webkit-scrollbar, .apage::-webkit-scrollbar, #admScroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.tscroll::-webkit-scrollbar-track, .fpage::-webkit-scrollbar-track, .apage::-webkit-scrollbar-track, #admScroll::-webkit-scrollbar-track { background: #f0f4ff; border-radius: 4px; }
+.tscroll::-webkit-scrollbar-thumb, .fpage::-webkit-scrollbar-thumb, .apage::-webkit-scrollbar-thumb, #admScroll::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 4px; }
+.tscroll::-webkit-scrollbar-thumb:hover, .fpage::-webkit-scrollbar-thumb:hover, #admScroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.tscroll, .fpage, .apage, #admScroll { scrollbar-width: thin; scrollbar-color: #93c5fd #f0f4ff; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 8px 11px; text-align: left; font-size: 10px; font-weight: 600;
+  color: var(--text2); text-transform: uppercase; letter-spacing: .05em;
+  background: #f9fafb; border-bottom: 1px solid var(--border);
+  white-space: nowrap; position: sticky; top: 0; z-index: 4; cursor: grab; user-select: none;
+  position: relative;
+}
+td { border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8faff; }
+.td { padding: 9px 11px; line-height: 1.5; }
+
+/* BADGES */
+.bdg { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.bg { background: #dcfce7; color: #15803d; }
+.br { background: #fee2e2; color: #991b1b; }
+.by { background: #fef9c3; color: #854d0e; }
+.bb { background: #dbeafe; color: #1e40af; }
+.bfirm { background: #eff6ff; color: #1d4ed8; }
+.bnew { background: #fce7f3; color: #be185d; }
+
+/* STATUS */
+.ssel { border: none; border-radius: 10px; font-size: 11px; font-weight: 600; padding: 3px 7px; cursor: pointer; outline: none; font-family: inherit; }
+.sn { background: #f3f4f6; color: #6b7280; }
+.ss2 { background: #fef9c3; color: #854d0e; }
+.sp { background: #dbeafe; color: #1e40af; }
+.sf { background: #dcfce7; color: #15803d; }
+
+/* DRAG */
+.dh { cursor: grab; color: #d1d5db; font-size: 14px; padding: 0 3px; }
+.dh:hover { color: #9ca3af; }
+tr.dragging { opacity: .4; }
+tr.drag-over { outline: 2px solid var(--accent); }
+
+/* COL RESIZE */
+.rzr { position: absolute; right: 0; top: 0; width: 4px; height: 100%; cursor: col-resize; background: transparent; }
+.rzr:hover { background: var(--accent); opacity: .3; }
+
+/* EXPAND PANEL */
+tr.xrow > td { border-bottom: none; }
+.xpanel { background: #f8faff; border-bottom: 2px solid #dbeafe; }
+.xinner { padding: 12px 14px 12px 44px; }
+.xtitle { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+
+/* COSTS */
+.clist { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.crow { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #dbeafe; border-radius: 6px; padding: 7px 10px; }
+.cnum { font-size: 11px; color: #9ca3af; min-width: 14px; }
+.csum { font-size: 13px; font-weight: 700; color: var(--text); min-width: 110px; }
+.ccom { font-size: 12px; flex: 1; }
+.cdate { font-size: 10px; color: #9ca3af; }
+.cdel { background: none; border: none; cursor: pointer; color: var(--danger); opacity: .5; font-size: 13px; }
+.cdel:hover { opacity: 1; }
+.ctot { display: flex; gap: 10px; align-items: center; padding: 7px 0 0; border-top: 1px solid #dbeafe; font-size: 12px; }
+.acost { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 9px 11px; background: #fff; border: 1.5px dashed #bfdbfe; border-radius: 6px; }
+.acrow { display: flex; gap: 7px; }
+.acost input, .acost textarea { padding: 6px 9px; border: 1px solid #dbeafe; border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; }
+.acs { width: 120px; }
+.acc { flex: 1; resize: none; height: 32px; }
+
+/* FILES */
+.flist { display: flex; flex-direction: column; gap: 5px; margin-bottom: 7px; }
+.frow { display: flex; align-items: center; gap: 7px; background: #fff; border: 1px solid #dbeafe; border-radius: 6px; padding: 6px 9px; }
+.fic { font-size: 16px; }
+.fin { flex: 1; min-width: 0; }
+.fnm { font-size: 12px; font-weight: 500; color: var(--accent); text-decoration: none; }
+.fnm:hover { text-decoration: underline; }
+.fmeta { font-size: 10px; color: #9ca3af; }
+.fup { display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; background: #fff; border: 1.5px dashed #bfdbfe; border-radius: 6px; font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+.fup:hover { background: #eff6ff; }
+
+/* CONTRACT FORM */
+.cform { background: #fff; border: 2px solid var(--accent); border-radius: var(--radius); padding: 14px; margin: 0 14px 8px; flex-shrink: 0; }
+.cform-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 7px; }
+.ffield label { display: block; font-size: 10px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.ffield input, .ffield select { width: 100%; padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; }
+.ffield input:focus, .ffield select:focus { border-color: var(--accent); }
+.factions { display: flex; gap: 7px; margin-top: 10px; }
+
+/* ANALYTICS */
+.apage { flex: 1; overflow: auto; padding: 10px 14px; }
+.agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-top: 4px; }
+.acard { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.actitle { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.brow { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.blabel { font-size: 11px; color: var(--text2); width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btrack { flex: 1; background: #f3f4f6; border-radius: 3px; height: 7px; }
+.bfill { height: 100%; border-radius: 3px; background: var(--accent); }
+.bval { font-size: 11px; font-weight: 600; min-width: 70px; text-align: right; }
+
+/* FINANCE */
+.fpage { flex: 1; overflow: auto; padding: 10px 14px; }
+.ftable { width: 100%; border-collapse: collapse; background: var(--bg2); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+.ftable th { padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text2); text-transform: uppercase; background: #f9fafb; border-bottom: 1px solid var(--border); }
+.ftable td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; font-size: 12px; }
+.ftable tr:last-child td { border-bottom: none; }
+.pp { color: #15803d; font-weight: 700; }
+.pn { color: #dc2626; font-weight: 700; }
+
+/* ADM EXPENSES */
+.adm-empty-cell:hover .adm-plus-btn { opacity: 1 !important; }
+.adm-data-cell { position: relative; }
+.adm-data-cell .adm-del-cell-btn { position: absolute; top: 2px; right: 2px; opacity: 0; background: #fee2e2; border: none; border-radius: 3px; padding: 1px 4px; color: var(--danger); cursor: pointer; font-size: 10px; transition: opacity .15s; z-index: 2; }
+.adm-data-cell:hover .adm-del-cell-btn { opacity: 1; }
+.adm-th-drag { cursor: grab; }
+.adm-th-drag-over { border-left: 3px solid var(--accent) !important; }
+.adm-col-resizer { position: absolute; right: 0; top: 0; width: 5px; height: 100%; cursor: col-resize; background: transparent; }
+.adm-col-resizer:hover { background: rgba(255,255,255,.3); }
+#admScroll { scrollbar-width: thin; scrollbar-color: #93c5fd #f0f4ff; }
+
+/* GROK PANEL */
+#grokPanel { position: fixed; right: 0; top: 0; bottom: 0; width: 420px; background: #fff; border-left: 2px solid var(--accent); display: none; flex-direction: column; z-index: 1000; box-shadow: -8px 0 30px rgba(0,0,0,.15); }
+#grokPanel.open { display: flex; }
+.grok-header { padding: 16px 20px; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.grok-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.grok-close { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; padding: 0; }
+.grok-close:hover { color: #fff; }
+.grok-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #f8fafc; }
+.grok-msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.45; }
+.grok-msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.grok-msg.ai { align-self: flex-start; background: #f1f5f9; color: var(--text); border-bottom-left-radius: 4px; }
+.grok-input-area { padding: 16px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.grok-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.grok-quick button { padding: 5px 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; font-size: 11px; cursor: pointer; color: #374151; font-family: inherit; }
+.grok-quick button:hover { background: #eff6ff; border-color: #bfdbfe; color: var(--accent); }
+.grok-input-row { display: flex; gap: 8px; }
+.grok-input { flex: 1; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
+.grok-input:focus { border-color: var(--accent); }
+.grok-send { padding: 0 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.grok-send:hover { background: #1d4ed8; }
+.grok-send:disabled { background: #9ca3af; cursor: not-allowed; }
+
+/* SCROLL NAV BUTTONS */
+.snav { position: fixed; right: 10px; bottom: 14px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
+.snav button { width: 30px; height: 30px; background: var(--dark); border: none; color: #fff; border-radius: 50%; cursor: pointer; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.snav button:hover { background: var(--accent); }
+
+/* LOADING */
+.loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: #9ca3af; gap: 10px; }
+.spinner { width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.nodata { text-align: center; padding: 40px; color: #9ca3af; }
+.exp-btn { padding: 4px 9px; border-radius: 5px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; cursor: pointer; font-size: 11px; font-family: inherit; }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lcard">
+    <div class="llogo">
+      <div class="li">🏭</div>
+      <h1>КазДемеу</h1>
+      <p>Система управления договорами</p>
+    </div>
+    <div class="rlist" id="rlist"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()" disabled>Войти</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="t-logo">🏭 КазДемеу</div>
+    <div class="t-badge" id="tbadge"></div>
+    <div class="t-right">
+      <div class="zc">
+        <button class="zb" onclick="zoom(-1)">−</button>
+        <span class="zl" id="zlbl">100%</span>
+        <button class="zb" onclick="zoom(1)">+</button>
+        <button class="zb" onclick="zoom(0)">↺</button>
+      </div>
+      <button class="exp-btn" onclick="exportData()">💾 Экспорт</button>
+      <label class="exp-btn"><input type="file" accept=".json" onchange="importData(event)" style="display:none">📂 Импорт</label>
+      <span id="sbStatus" style="font-size:11px;color:#94a3b8">⏳</span>
+      <button class="tb purple" onclick="toggleGrok()">🤖 Grok AI</button>
+      <button class="tb yellow" id="btnPassSettings" style="display:none" onclick="openPasswordSettings()">🔑 Пароли</button>
+      <button class="tb" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+  <div id="app-inner" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
+    <div class="navtabs" id="navtabs" style="display:none"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<!-- GROK PANEL -->
+<div id="grokPanel">
+  <div class="grok-header">
+    <div class="grok-title">🤖 Grok AI <span style="font-size:11px;background:#334155;padding:2px 8px;border-radius:999px;font-weight:400">онлайн</span></div>
+    <button class="grok-close" onclick="toggleGrok()">✕</button>
+  </div>
+  <div class="grok-messages" id="grokMessages">
+    <div class="grok-msg ai">Привет! Я знаю все ваши договора и расходы. Спросите меня!</div>
+  </div>
+  <div class="grok-input-area">
+    <div class="grok-quick">
+      <button onclick="grokAsk('Сколько договоров и общая сумма?')">📊 Итоги</button>
+      <button onclick="grokAsk('Какие договора не оплачены?')">❌ Дебиторка</button>
+      <button onclick="grokAsk('Топ 5 дорогих договоров')">💰 Топ</button>
+      <button onclick="grokAsk('Проанализируй финансы')">📈 Анализ</button>
+      <button onclick="grokAsk('Какие риски есть?')">⚠️ Риски</button>
+    </div>
+    <div class="grok-input-row">
+      <input type="text" class="grok-input" id="grokInput" placeholder="Спросите Grok..." onkeydown="if(event.key==='Enter')grokSend()">
+      <button class="grok-send" id="grokSendBtn" onclick="grokSend()">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCROLL NAV -->
+<div class="snav" id="snav" style="display:none">
+  <button onclick="scrollTbl(-300)">▲</button>
+  <button onclick="scrollTbl(300)">▼</button>
+</div>
+
+<!-- SCRIPTS -->
+<script>
+
+// === supabase.js ===
+// ===== SUPABASE CLIENT =====
+const SUPABASE_URL = 'https://cbdvpzryztoyowprjtro.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHZwenJ5enRveW93cHJqdHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUxNTIsImV4cCI6MjA5NTkwMTE1Mn0.hd8CMF_sPxsy35KeRPGfjtHFcJWp4kTrvw_gbHtmFn0';
+
+// Simple Supabase REST client
+const supabase = {
+  url: SUPABASE_URL,
+  key: SUPABASE_KEY,
+
+  async query(table, options = {}) {
+    let url = `${this.url}/rest/v1/${table}`;
+    const params = [];
+    
+    if (options.select) params.push(`select=${options.select}`);
+    if (options.filter) {
+      Object.entries(options.filter).forEach(([k, v]) => params.push(`${k}=eq.${v}`));
+    }
+    if (options.order) params.push(`order=${options.order}`);
+    if (options.limit) params.push(`limit=${options.limit}`);
+    
+    if (params.length) url += '?' + params.join('&');
+
+    const res = await fetch(url, {
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      }
+    });
+    
+    if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+    return res.json();
+  },
+
+  async insert(table, data) {
+    const res = await fetch(`${this.url}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Insert failed');
+    }
+    return res.json();
+  },
+
+  async update(table, id, data) {
+    const res = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Update failed');
+    return res.json();
+  },
+
+  async delete(table, id) {
+    const res = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`
+      }
+    });
+    if (!res.ok) throw new Error('Delete failed');
+    return true;
+  },
+
+  async upsert(table, data, onConflict = 'id') {
+    const res = await fetch(`${this.url}/rest/v1/${table}?on_conflict=${onConflict}`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation,resolution=merge-duplicates'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Upsert failed');
+    return res.json();
+  },
+
+  // Realtime subscription via polling (simple approach)
+  subscribe(table, callback, interval = 5000) {
+    let lastCheck = new Date().toISOString();
+    return setInterval(async () => {
+      try {
+        const data = await this.query(table, {
+          filter: { 'updated_at': `gte.${lastCheck}` }
+        });
+        if (data.length > 0) {
+          lastCheck = new Date().toISOString();
+          callback(data);
+        }
+      } catch(e) {}
+    }, interval);
+  }
+};
+
+// ===== LOCAL STORAGE HELPERS =====
+const ls = (k, d = null) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } };
+const lsw = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+// ===== FORMAT HELPERS =====
+const fmtN = n => Math.round(n).toLocaleString('ru-RU') + '₸';
+const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU') : '—';
+
+
+// === auth.js ===
+// ===== АВТОРИЗАЦИЯ И РОЛИ =====
+
+const ROLES = {
+  admin:       { l: 'Администратор', i: '👑', c: '#1e3a8a', bg: '#dbeafe', d: 'Полный доступ' },
+  manager:     { l: 'Менеджер',      i: '💼', c: '#064e3b', bg: '#d1fae5', d: 'Заказы (без цен)' },
+  constructor: { l: 'Конструктор',   i: '🔧', c: '#4c1d95', bg: '#ede9fe', d: 'Технические данные' },
+  technolog:   { l: 'Технолог',      i: '⚙️', c: '#134e4a', bg: '#ccfbf1', d: 'Технологические данные' },
+  logist:      { l: 'Логист',        i: '🚚', c: '#0c4a6e', bg: '#e0f2fe', d: 'Доставка и сроки' },
+  goszakup:    { l: 'Госзакупщик',   i: '📋', c: '#881337', bg: '#ffe4e6', d: 'Добавление/удаление' }
+};
+
+const BADGES = {
+  admin:       'background:#1e3a8a;color:#93c5fd',
+  manager:     'background:#064e3b;color:#6ee7b7',
+  constructor: 'background:#4c1d95;color:#ddd6fe',
+  technolog:   'background:#134e4a;color:#99f6e4',
+  logist:      'background:#0c4a6e;color:#bae6fd',
+  goszakup:    'background:#881337;color:#fda4af'
+};
+
+// Пароли (хранятся локально, admin может менять)
+const DEFAULT_PASSWORDS = {
+  admin:       'kazdemeu-nan',
+  manager:     'manager2026',
+  constructor: 'const2026',
+  technolog:   'tech2026',
+  logist:      'logist2026',
+  goszakup:    'zakup2026'
+};
+
+let ROLE_PASSWORDS = Object.assign({}, DEFAULT_PASSWORDS, ls('kd_passwords', {}));
+const savePasswords = () => lsw('kd_passwords', ROLE_PASSWORDS);
+
+// Текущий пользователь
+let currentRole = null;
+
+// Инициализация экрана входа
+function initLogin() {
+  const list = document.getElementById('rlist');
+  list.innerHTML = Object.entries(ROLES).map(([k, v]) => `
+    <div class="ritem" onclick="selectRole('${k}')" data-r="${k}">
+      <div class="rico" style="background:${v.c};color:#fff">${v.i}</div>
+      <div class="rinfo"><b>${v.l}</b><span>${v.d}</span></div>
+    </div>`).join('');
+}
+
+function selectRole(r) {
+  currentRole = r;
+  document.querySelectorAll('.ritem').forEach(el => el.classList.toggle('on', el.dataset.r === r));
+  document.getElementById('lbtn').disabled = false;
+}
+
+async function doLogin() {
+  if (!currentRole) return;
+  
+  const pass = prompt(`Введите пароль для роли: ${ROLES[currentRole].l}`);
+  if (!pass) return;
+  
+  if (pass !== ROLE_PASSWORDS[currentRole]) {
+    alert('❌ Неверный пароль!');
+    return;
+  }
+
+  // Show app
+  document.getElementById('loginWrap').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  
+  const R = ROLES[currentRole];
+  document.getElementById('tbadge').textContent = R.l;
+  document.getElementById('tbadge').style.cssText = BADGES[currentRole];
+  document.getElementById('snav').style.display = 'flex';
+
+  // Admin extras
+  if (currentRole === 'admin') {
+    document.getElementById('navtabs').style.display = 'flex';
+    document.getElementById('btnPassSettings').style.display = 'inline-block';
+  }
+
+  applyZoom();
+  
+  // Load data from Supabase
+  await loadAllData();
+  
+  // Start realtime updates
+  startRealtimeSync();
+  
+  // Render
+  goPage('contracts');
+}
+
+function doLogout() {
+  currentRole = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('navtabs').style.display = 'none';
+  document.getElementById('btnPassSettings').style.display = 'none';
+  document.getElementById('snav').style.display = 'none';
+  document.querySelectorAll('.ritem').forEach(el => el.classList.remove('on'));
+  document.getElementById('lbtn').disabled = true;
+  stopRealtimeSync();
+}
+
+// Password management
+function openPasswordSettings() {
+  if (currentRole !== 'admin') return;
+  
+  const roleNames = { manager:'Менеджер', constructor:'Конструктор', technolog:'Технолог', logist:'Логист', goszakup:'Госзакупщик' };
+  
+  let html = `
+    <style>*{box-sizing:border-box;font-family:Inter,sans-serif}body{padding:24px;background:#f1f5f9}h2{margin-bottom:16px;color:#0f1923}
+    .field{margin-bottom:12px}label{display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px;text-transform:uppercase}
+    input{width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px}
+    button{width:100%;padding:12px;background:#1a56db;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}</style>
+    <h2>🔑 Управление паролями</h2>
+    <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px;margin-bottom:16px;font-size:12px;color:#92400e">⚠️ Пароль администратора: <b>kazdemeu-nan</b> (не изменяется)</div>`;
+  
+  Object.entries(roleNames).forEach(([r, name]) => {
+    html += `<div class="field"><label>${name}</label><input type="text" id="p-${r}" value="${ROLE_PASSWORDS[r]}"></div>`;
+  });
+  html += `<button onclick="saveNewPasswords()">✓ Сохранить</button>`;
+  
+  const w = window.open('', '_blank', 'width=480,height=500');
+  w.document.write(html);
+  
+  w.saveNewPasswords = () => {
+    Object.keys(roleNames).forEach(r => {
+      const el = w.document.getElementById(`p-${r}`);
+      if (el && el.value.trim()) ROLE_PASSWORDS[r] = el.value.trim();
+    });
+    savePasswords();
+    w.alert('✅ Пароли сохранены!');
+    w.close();
+  };
+}
+
+// Permission helpers
+const canPrice   = () => currentRole === 'admin';
+const canCosts   = () => currentRole === 'admin';
+const canManage  = () => currentRole === 'admin' || currentRole === 'goszakup';
+const canDelFile = () => currentRole === 'admin';
+const myRoleKey  = () => ({ manager:'manager', constructor:'constructor', technolog:'technolog', logist:'logist' }[currentRole] || null);
+
+
+// === contracts.js ===
+// ===== ДОГОВОРА =====
+
+// Local state (cache from Supabase)
+let contracts = [];
+let contractCosts = {};
+let contractFiles = {};
+let contractStatuses = {};
+let hiddenContracts = new Set(ls('kd_hidden', []));
+
+let searchQ = '';
+let filterFirm = '';
+let expandedRows = new Set();
+let editId = null;
+let showForm = false;
+let dragSrc = null;
+let resizing = null;
+let colWidths = ls('kd_colw', {});
+
+// ===== LOAD DATA =====
+async function loadAllData() {
+  showLoading();
+  try {
+    const [c, costs, files, statuses, cats, records] = await Promise.all([
+      supabase.query('contracts', { select: '*', order: 'sort_order.asc,created_at.desc' }),
+      supabase.query('contract_costs', { select: '*', order: 'created_at.asc' }),
+      supabase.query('contract_files', { select: '*', order: 'created_at.asc' }),
+      supabase.query('contract_statuses', { select: '*' }),
+      supabase.query('expense_categories', { select: '*', order: 'sort_order.asc' }),
+      supabase.query('expense_records', { select: '*', order: 'created_at.asc' })
+    ]);
+    
+    contracts = c || [];
+    
+    // Load expense categories & records
+    expenseCategories = cats || [];
+    expenseRecords = {};
+    (records || []).forEach(r => {
+      if (!expenseRecords[r.category_id]) expenseRecords[r.category_id] = [];
+      expenseRecords[r.category_id].push(r);
+    });
+    
+    // Group costs by contract
+    contractCosts = {};
+    (costs || []).forEach(c => {
+      if (!contractCosts[c.contract_id]) contractCosts[c.contract_id] = [];
+      contractCosts[c.contract_id].push(c);
+    });
+    
+    // Group files by contract
+    contractFiles = {};
+    (files || []).forEach(f => {
+      if (!contractFiles[f.contract_id]) contractFiles[f.contract_id] = [];
+      contractFiles[f.contract_id].push(f);
+    });
+    
+    // Group statuses
+    contractStatuses = {};
+    (statuses || []).forEach(s => {
+      if (!contractStatuses[s.contract_id]) contractStatuses[s.contract_id] = {};
+      contractStatuses[s.contract_id][s.role] = s.status;
+    });
+    
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    console.error('Load error:', e);
+    showError('Ошибка загрузки данных: ' + e.message);
+  }
+}
+
+function showLoading() {
+  const m = document.getElementById('main');
+  if (m) m.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка данных...</div>';
+}
+function hideLoading() {}
+function showError(msg) {
+  const m = document.getElementById('main');
+  if (m) m.innerHTML = `<div class="nodata" style="color:#dc2626">❌ ${msg}</div>`;
+}
+
+// ===== REALTIME SYNC =====
+let syncInterval = null;
+
+let lastSyncTime = new Date().toISOString();
+
+function startRealtimeSync() {
+  syncInterval = setInterval(async () => {
+    try {
+      // Check for new contracts
+      const updated = await supabase.query('contracts', {
+        select: 'id,updated_at',
+        order: 'updated_at.desc',
+        limit: 1
+      });
+      if (updated && updated[0] && updated[0].updated_at > lastSyncTime) {
+        lastSyncTime = new Date().toISOString();
+        await loadAllData();
+        const m = document.getElementById('main');
+        if (currentPage === 'contracts') renderContractsPage(m);
+        else if (currentPage === 'expenses') renderExpensesPage(m);
+        else if (currentPage === 'finance') renderFinancePage(m);
+        else if (currentPage === 'analytics') renderAnalyticsPage(m);
+      }
+    } catch(e) {}
+  }, 15000); // Check every 15 seconds
+}
+
+function stopRealtimeSync() {
+  if (syncInterval) clearInterval(syncInterval);
+}
+
+// ===== FILTER =====
+function filtered() {
+  return contracts.filter(r => {
+    if (!hiddenContracts.has(r.id) === false && currentRole !== 'admin') return false;
+    if (!r.is_visible && currentRole !== 'admin') return false;
+    const q = searchQ.toLowerCase();
+    return (!q || (r.item||'').toLowerCase().includes(q) || 
+            (r.org||'').toLowerCase().includes(q) || 
+            (r.code||'').toLowerCase().includes(q) ||
+            (r.contract_number||'').toLowerCase().includes(q)) && 
+           (!filterFirm || r.firm === filterFirm);
+  });
+}
+
+function firms() {
+  return [...new Set(contracts.map(r => r.firm).filter(Boolean))];
+}
+
+// ===== STATUS =====
+const STATUS_OPTS = [
+  { v: '', l: '— нет —', c: 'sn' },
+  { v: 'start', l: '🟡 Старт', c: 'ss2' },
+  { v: 'plan', l: '🔵 Плановая', c: 'sp' },
+  { v: 'finish', l: '🟢 Финиш', c: 'sf' }
+];
+
+const getStatus = (id, role) => (contractStatuses[id] || {})[role] || '';
+const getCls = v => STATUS_OPTS.find(o => o.v === v)?.c || 'sn';
+
+async function setStatus(contractId, role, val) {
+  if (!contractStatuses[contractId]) contractStatuses[contractId] = {};
+  contractStatuses[contractId][role] = val;
+  
+  // Update UI immediately
+  const sel = document.querySelector(`select[data-sid="${contractId}-${role}"]`);
+  if (sel) { sel.value = val; sel.className = 'ssel ' + getCls(val); }
+  const cell = document.querySelector(`div[data-src="${contractId}"]`);
+  if (cell) cell.innerHTML = statusCellHtml(contractId);
+  
+  // Save to Supabase
+  try {
+    await supabase.upsert('contract_statuses', {
+      contract_id: contractId,
+      role: role,
+      status: val
+    }, 'contract_id,role');
+  } catch(e) { console.error('Status save error:', e); }
+}
+
+function statusSel(id, role) {
+  const cur = getStatus(id, role);
+  return `<select data-sid="${id}-${role}" class="ssel ${getCls(cur)}" onchange="setStatus('${id}','${role}',this.value);this.className='ssel '+getCls(this.value)">
+    ${STATUS_OPTS.map(o => `<option value="${o.v}"${cur === o.v ? ' selected' : ''}>${o.l}</option>`).join('')}
+  </select>`;
+}
+
+const statusBadge = v => {
+  const o = STATUS_OPTS.find(x => x.v === v);
+  if (!o || !o.v) return '<span style="color:#9ca3af;font-size:11px">—</span>';
+  const cls = v === 'start' ? 'by' : v === 'plan' ? 'bb' : 'bg';
+  return `<span class="bdg ${cls}">${o.l}</span>`;
+};
+
+function statusCellHtml(id) {
+  return ['manager','constructor','technolog','logist'].map(r => `
+    <div style="display:flex;align-items:center;gap:4px;white-space:nowrap">
+      <span style="font-size:10px;color:#9ca3af;min-width:26px">${{manager:'Мен.',constructor:'Кон.',technolog:'Тех.',logist:'Лог.'}[r]}</span>
+      ${statusBadge(getStatus(id, r))}
+    </div>`).join('');
+}
+
+// ===== COSTS =====
+function getCosts(id) { return contractCosts[id] || []; }
+
+async function addCost(contractId) {
+  const sEl = document.getElementById('cs-' + contractId);
+  const cEl = document.getElementById('cc-' + contractId);
+  const s = parseFloat((sEl?.value || '').replace(/\s/g, '').replace(',', '.'));
+  const c = (cEl?.value || '').trim();
+  if (!s || s <= 0) { if (sEl) sEl.style.borderColor = 'red'; return; }
+  
+  try {
+    const result = await supabase.insert('contract_costs', {
+      contract_id: contractId,
+      amount: s,
+      comment: c
+    });
+    if (!contractCosts[contractId]) contractCosts[contractId] = [];
+    contractCosts[contractId].push(result[0]);
+    expandedRows.add(contractId);
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function delCost(contractId, costId) {
+  try {
+    await supabase.delete('contract_costs', costId);
+    contractCosts[contractId] = contractCosts[contractId].filter(c => c.id !== costId);
+    expandedRows.add(contractId);
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function costsHtml(row, canEdit) {
+  const id = row.id;
+  const list = getCosts(id);
+  const tot = list.reduce((s, c) => s + Number(c.amount), 0);
+  const rem = Number(row.total) - tot;
+  
+  let h = `<div class="xtitle">💸 Затраты</div>`;
+  if (list.length) {
+    h += `<div class="clist">${list.map(c => `
+      <div class="crow">
+        <span class="csum">${fmtN(c.amount)}</span>
+        <span class="ccom">${c.comment || '—'}</span>
+        <span class="cdate">${fmtDate(c.created_at)}</span>
+        ${canEdit ? `<button class="cdel" onclick="delCost('${id}','${c.id}')">✕</button>` : ''}
+      </div>`).join('')}</div>
+      <div class="ctot">
+        <span>Итого: <b>${fmtN(tot)}</b></span>
+        <span style="color:${rem >= 0 ? '#15803d' : '#dc2626'};font-weight:600">${rem >= 0 ? 'Остаток' : 'Перерасход'}: ${fmtN(Math.abs(rem))}</span>
+      </div>`;
+  } else {
+    h += `<div style="color:#9ca3af;font-size:12px;margin-bottom:8px">Затрат нет</div>`;
+  }
+  if (canEdit) {
+    h += `<div class="acost"><div class="acrow">
+      <input id="cs-${id}" class="acs" type="number" placeholder="Сумма (₸)">
+      <textarea id="cc-${id}" class="acc" placeholder="Комментарий..."></textarea>
+    </div><button class="btn btn-p" style="align-self:flex-start;font-size:11px;padding:5px 10px" onclick="addCost('${id}')">+ Добавить затрату</button></div>`;
+  }
+  return h;
+}
+
+// ===== FILES =====
+function getFiles(id) { return contractFiles[id] || []; }
+
+const fileIcon = name => {
+  const n = (name || '').toLowerCase();
+  if (n.includes('.pdf')) return '📄';
+  if (n.includes('.doc')) return '📝';
+  if (n.includes('.xls')) return '📊';
+  if (n.includes('.png') || n.includes('.jpg')) return '🖼️';
+  return '🔗';
+};
+
+async function addFileLink(contractId) {
+  const name = prompt('Название файла (например: ТЗ_договор.pdf):');
+  if (!name?.trim()) return;
+  const url = prompt('Ссылка на Google Drive\n(Файл → Поделиться → Скопировать ссылку):');
+  if (!url?.trim()) return;
+  
+  try {
+    const result = await supabase.insert('contract_files', {
+      contract_id: contractId,
+      name: name.trim(),
+      url: url.trim()
+    });
+    if (!contractFiles[contractId]) contractFiles[contractId] = [];
+    contractFiles[contractId].push(result[0]);
+    expandedRows.add(contractId);
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function delFile(contractId, fileId) {
+  try {
+    await supabase.delete('contract_files', fileId);
+    contractFiles[contractId] = contractFiles[contractId].filter(f => f.id !== fileId);
+    expandedRows.add(contractId);
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function filesHtml(id, canAdd, canDel) {
+  const list = getFiles(id);
+  let h = `<div class="xtitle" style="margin-top:10px">📎 Технические файлы</div>`;
+  if (list.length) {
+    h += `<div class="flist">${list.map(f => `
+      <div class="frow">
+        <span class="fic">${fileIcon(f.name)}</span>
+        <div class="fin">
+          <a href="${f.url}" target="_blank" class="fnm">${f.name}</a>
+          <div class="fmeta">Google Drive · ${fmtDate(f.created_at)}</div>
+        </div>
+        ${canDel ? `<button class="cdel" onclick="delFile('${id}','${f.id}')">✕</button>` : ''}
+      </div>`).join('')}</div>`;
+  } else {
+    h += `<div style="color:#9ca3af;font-size:12px;margin-bottom:6px">Файлов нет</div>`;
+  }
+  if (canAdd) {
+    h += `<button class="fup" onclick="addFileLink('${id}')">🔗 Добавить ссылку</button>`;
+  }
+  return h;
+}
+
+// ===== CONTRACT CRUD =====
+const FORM_FIELDS = [
+  { id: 'nf-code', l: 'Номер закупки', ph: '16999999-1' },
+  { id: 'nf-firm', l: 'Фирма', ph: 'Каз Демеу' },
+  { id: 'nf-org', l: 'Организация *', ph: 'МВД' },
+  { id: 'nf-item', l: 'Предмет закупки', ph: 'Костюм...' },
+  { id: 'nf-qty', l: 'Кол-во', ph: '100', t: 'text' },
+  { id: 'nf-price', l: 'Цена', ph: '15000', t: 'text' },
+  { id: 'nf-total', l: 'Сумма (без НДС)', ph: '1500000', t: 'text' },
+  { id: 'nf-location', l: 'Место поставки', ph: 'г.Астана...' },
+  { id: 'nf-deadline', l: 'Срок поставки', ph: '60 дней...' },
+  { id: 'nf-contract_number', l: '№ договора', ph: '' },
+  { id: 'nf-phone', l: 'Телефон', ph: '' },
+  { id: 'nf-signed_date', l: 'Дата подписания', ph: '01.06.2026' },
+  { id: 'nf-delivery_date', l: 'Срок исполнения', ph: '01.08.2026' },
+  { id: 'nf-comment', l: 'Комментарий', ph: '' },
+];
+
+const fv = id => (document.getElementById(id) || {}).value || '';
+
+function formHtml(editing) {
+  const r = editing ? contracts.find(x => x.id === editId) : null;
+  return `<div class="cform">
+    <div class="cform-title">${editing ? '✏️ Редактирование договора' : '+ Новый договор'}</div>
+    <div class="fgrid">
+      ${FORM_FIELDS.map(f => `<div class="ffield">
+        <label>${f.l}</label>
+        <input id="${f.id}" type="${f.t || 'text'}" placeholder="${f.ph}" value="${r ? (r[f.id.replace('nf-', '')] || '') : ''}" ${f.id === 'nf-code' && editing ? 'readonly' : ''}>
+      </div>`).join('')}
+    </div>
+    <div class="factions">
+      <button class="btn btn-p" onclick="${editing ? 'saveEdit()' : 'saveNew()'}">✓ Сохранить</button>
+      <button class="btn btn-g" onclick="cancelForm()">Отмена</button>
+    </div>
+  </div>`;
+}
+
+function rowFromForm() {
+  return {
+    code: fv('nf-code').trim() || null,
+    firm: fv('nf-firm'),
+    org: fv('nf-org'),
+    item: fv('nf-item'),
+    qty: parseInt(fv('nf-qty')) || 0,
+    price: parseFloat(fv('nf-price')) || 0,
+    total: parseFloat(fv('nf-total')) || 0,
+    location: fv('nf-location'),
+    deadline: fv('nf-deadline'),
+    contract_number: fv('nf-contract_number'),
+    phone: fv('nf-phone'),
+    signed_date: fv('nf-signed_date'),
+    delivery_date: fv('nf-delivery_date'),
+    comment: fv('nf-comment'),
+  };
+}
+
+async function saveNew() {
+  const data = rowFromForm();
+  if (!data.org) { document.getElementById('nf-org').style.borderColor = 'red'; return; }
+  try {
+    const result = await supabase.insert('contracts', { ...data, sort_order: 0 });
+    contracts.unshift(result[0]);
+    showForm = false;
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function saveEdit() {
+  const data = rowFromForm();
+  try {
+    const result = await supabase.update('contracts', editId, data);
+    const idx = contracts.findIndex(x => x.id === editId);
+    if (idx >= 0) contracts[idx] = { ...contracts[idx], ...result[0] };
+    editId = null; showForm = false;
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function cancelForm() { showForm = false; editId = null; renderContractsPage(); }
+function startEdit(id) { editId = id; showForm = true; renderContractsPage(); }
+function startAdd() { editId = null; showForm = true; renderContractsPage(); }
+
+async function deleteRow(id) {
+  if (!confirm('Удалить договор?')) return;
+  try {
+    await supabase.delete('contracts', id);
+    contracts = contracts.filter(r => r.id !== id);
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function togglePay(id) {
+  if (currentRole !== 'admin') return;
+  const r = contracts.find(x => x.id === id);
+  if (!r) return;
+  const newStatus = r.payment_status === 'paid' ? 'unpaid' : 'paid';
+  try {
+    await supabase.update('contracts', id, { payment_status: newStatus });
+    r.payment_status = newStatus;
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function toggleVisibility(id) {
+  if (currentRole !== 'admin') return;
+  const r = contracts.find(x => x.id === id);
+  if (!r) return;
+  const newVis = !r.is_visible;
+  try {
+    await supabase.update('contracts', id, { is_visible: newVis });
+    r.is_visible = newVis;
+    renderContractsPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+// ===== DRAG ROWS =====
+function onDS(e, id) {
+  dragSrc = id;
+  setTimeout(() => { const el = document.querySelector(`tr[data-id="${id}"]`); if (el) el.classList.add('dragging'); }, 0);
+}
+function onDE() { document.querySelectorAll('tr.dragging, tr.drag-over').forEach(el => el.classList.remove('dragging', 'drag-over')); }
+function onDO(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('tr.drag-over').forEach(el => el.classList.remove('drag-over'));
+  const el = document.querySelector(`tr[data-id="${id}"]`);
+  if (el && id !== dragSrc) el.classList.add('drag-over');
+}
+function onDrop(e, targetId) {
+  e.preventDefault(); onDE();
+  if (!dragSrc || dragSrc === targetId) return;
+  const si = contracts.findIndex(r => r.id === dragSrc);
+  const ti = contracts.findIndex(r => r.id === targetId);
+  if (si < 0 || ti < 0) return;
+  const [moved] = contracts.splice(si, 1);
+  contracts.splice(ti, 0, moved);
+  // Update sort orders in background
+  contracts.forEach((r, i) => { r.sort_order = i; });
+  renderContractsPage();
+  // Save sort to Supabase
+  Promise.all(contracts.map((r, i) => supabase.update('contracts', r.id, { sort_order: i }))).catch(console.error);
+}
+
+// ===== COLUMN RESIZE =====
+function initResizers() {
+  document.querySelectorAll('.tscroll th').forEach((th, i) => {
+    if (th.querySelector('.rzr')) return;
+    const k = currentRole + i;
+    if (colWidths[k]) th.style.minWidth = colWidths[k] + 'px';
+    const rz = document.createElement('div');
+    rz.className = 'rzr';
+    rz.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      resizing = { th, k, sx: e.clientX, sw: th.getBoundingClientRect().width };
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    th.appendChild(rz);
+  });
+}
+
+document.addEventListener('mousemove', e => {
+  if (!resizing) return;
+  const w = Math.max(40, resizing.sw + (e.clientX - resizing.sx));
+  resizing.th.style.minWidth = w + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (!resizing) return;
+  colWidths[resizing.k] = resizing.th.getBoundingClientRect().width;
+  lsw('kd_colw', colWidths);
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  resizing = null;
+});
+
+// ===== SEARCH =====
+function onSearch(v) {
+  searchQ = v;
+  renderTable();
+  requestAnimationFrame(() => {
+    const inp = document.getElementById('sinp');
+    if (inp) { inp.focus(); inp.setSelectionRange(v.length, v.length); }
+  });
+}
+
+function toggleExp(id) {
+  if (expandedRows.has(id)) expandedRows.delete(id);
+  else expandedRows.add(id);
+  renderTable();
+}
+
+
+// === analytics.js ===
+// ===== АНАЛИТИКА =====
+function renderAnalyticsPage(m) {
+  if (!m) m = document.getElementById('main');
+  const data = contracts;
+  const paid = data.filter(r => r.payment_status === 'paid');
+  const tot = data.reduce((s, r) => s + Number(r.total || 0), 0);
+  const ptot = paid.reduce((s, r) => s + Number(r.total || 0), 0);
+  const avg = data.length ? tot / data.length : 0;
+
+  const byFirm = {}, byOrg = {}, byItem = {}, byRegion = {};
+  data.forEach(r => {
+    byFirm[r.firm || '—'] = (byFirm[r.firm || '—'] || 0) + Number(r.total || 0);
+    byOrg[r.org || '—'] = (byOrg[r.org || '—'] || 0) + Number(r.total || 0);
+    const qty = parseInt(r.qty) || 0;
+    byItem[r.item || '—'] = (byItem[r.item || '—'] || 0) + qty;
+
+    const loc = r.location || '';
+    let region = 'Не указан';
+    if (loc.includes('Астана')) region = 'Астана';
+    else if (loc.includes('Алматы')) region = 'Алматы';
+    else if (loc.includes('Костанай')) region = 'Костанайская обл.';
+    else if (loc.includes('Павлодар')) region = 'Павлодарская обл.';
+    else if (loc.includes('Уральск') || loc.includes('ЗКО')) region = 'ЗКО';
+    else if (loc.includes('Атырау')) region = 'Атырау';
+    else if (loc) region = 'Другие';
+    byRegion[region] = (byRegion[region] || 0) + 1;
+  });
+
+  const fs = Object.entries(byFirm).sort((a, b) => b[1] - a[1]);
+  const os = Object.entries(byOrg).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const items = Object.entries(byItem).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const regions = Object.entries(byRegion).sort((a, b) => b[1] - a[1]);
+  const mf = fs[0]?.[1] || 1, mo = os[0]?.[1] || 1, mi = items[0]?.[1] || 1, mr2 = regions[0]?.[1] || 1;
+
+  const sc = { start: 0, plan: 0, finish: 0, none: 0 };
+  data.forEach(r => {
+    const all_statuses = Object.values(contractStatuses[r.id] || {});
+    const v = all_statuses.find(s => s) || '';
+    if (v === 'start') sc.start++;
+    else if (v === 'plan') sc.plan++;
+    else if (v === 'finish') sc.finish++;
+    else sc.none++;
+  });
+
+  m.style.cssText = 'display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0';
+  m.innerHTML = `
+    <div class="stats">
+      <div class="sc"><div class="sl">Договоров</div><div class="sv">${data.length}</div></div>
+      <div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(tot)}</div></div>
+      <div class="sc"><div class="sl">Оплачено</div><div class="sv" style="color:#15803d;font-size:13px">${fmtN(ptot)}</div></div>
+      <div class="sc"><div class="sl">Не оплачено</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(tot - ptot)}</div></div>
+      <div class="sc"><div class="sl">Средний чек</div><div class="sv" style="font-size:13px">${fmtN(avg)}</div></div>
+    </div>
+    <div class="apage"><div class="agrid">
+      <div class="acard"><div class="actitle">📦 По фирмам</div>
+        ${fs.map(([k, v]) => `<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mf*100)}%"></div></div><div class="bval">${fmtN(v)}</div></div>`).join('')}
+      </div>
+      <div class="acard"><div class="actitle">🏢 Топ организаций</div>
+        ${os.map(([k, v]) => `<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mo*100)}%;background:#7c3aed"></div></div><div class="bval">${fmtN(v)}</div></div>`).join('')}
+      </div>
+      <div class="acard"><div class="actitle">🎯 Топ товаров</div>
+        ${items.map(([k, v]) => `<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mi*100)}%;background:#0891b2"></div></div><div class="bval">${v.toLocaleString('ru')} шт.</div></div>`).join('')}
+      </div>
+      <div class="acard"><div class="actitle">🗺️ По регионам</div>
+        ${regions.map(([k, v]) => `<div class="brow"><div class="blabel" title="${k}">${k}</div><div class="btrack"><div class="bfill" style="width:${Math.round(v/mr2*100)}%;background:#059669"></div></div><div class="bval">${v} дог.</div></div>`).join('')}
+      </div>
+      <div class="acard"><div class="actitle">📋 Статусы выполнения</div>
+        ${[['🟡 Старт', sc.start, '#854d0e'], ['🔵 Плановая', sc.plan, '#1e40af'], ['🟢 Финиш', sc.finish, '#15803d'], ['— Не задан', sc.none, '#9ca3af']].map(([l, v, c]) => `
+          <div class="brow"><div class="blabel">${l}</div><div class="btrack"><div class="bfill" style="width:${data.length ? Math.round(v/data.length*100) : 0}%;background:${c}"></div></div><div class="bval">${v} (${data.length ? Math.round(v/data.length*100) : 0}%)</div></div>`).join('')}
+      </div>
+      <div class="acard"><div class="actitle">💳 Оплата договоров</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg viewBox="0 0 36 36" style="width:80px;height:80px;transform:rotate(-90deg)">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#15803d" stroke-width="3"
+                stroke-dasharray="${data.length ? Math.round(paid.length/data.length*100) : 0} 100" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#15803d">${data.length ? Math.round(paid.length/data.length*100) : 0}%</div>
+          </div>
+          <div>
+            <div style="color:#15803d;font-weight:600;font-size:12px">✅ ${paid.length} оплачено</div>
+            <div style="color:#dc2626;font-weight:600;font-size:12px;margin-top:4px">❌ ${data.length - paid.length} не оплачено</div>
+          </div>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+// ===== ФИНАНСЫ =====
+function renderFinancePage(m) {
+  if (!m) m = document.getElementById('main');
+  const rows = contracts.map(r => {
+    const cl = getCosts(r.id);
+    const ct = cl.reduce((s, c) => s + Number(c.amount), 0);
+    return { ...r, ct, profit: Number(r.total || 0) - ct, hasCosts: cl.length > 0 };
+  });
+  const gt = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const gc = rows.reduce((s, r) => s + r.ct, 0);
+  const gp = gt - gc;
+  const paid = rows.filter(r => r.payment_status === 'paid');
+  const unpaid = rows.filter(r => r.payment_status !== 'paid');
+  const paidSum = paid.reduce((s, r) => s + Number(r.total || 0), 0);
+  const paidCosts = paid.reduce((s, r) => s + r.ct, 0);
+  const realProfit = paidSum - paidCosts;
+  const unpaidSum = unpaid.reduce((s, r) => s + Number(r.total || 0), 0);
+  const pct = gt > 0 ? Math.round(paidSum/gt*100) : 0;
+  const top5 = rows.filter(r => r.hasCosts).sort((a, b) => b.profit - a.profit).slice(0, 5);
+  const firmProfit = {};
+  rows.forEach(r => {
+    if (!firmProfit[r.firm]) firmProfit[r.firm] = { sum: 0, costs: 0 };
+    firmProfit[r.firm].sum += Number(r.total || 0);
+    firmProfit[r.firm].costs += r.ct;
+  });
+
+  m.style.cssText = 'display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0';
+  m.innerHTML = `
+    <div class="stats">
+      <div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(gt)}</div></div>
+      <div class="sc"><div class="sl">Всего затрат</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(gc)}</div></div>
+      <div class="sc"><div class="sl">Прибыль</div><div class="sv" style="color:${gp>=0?'#15803d':'#dc2626'};font-size:13px">${fmtN(gp)}</div></div>
+      <div class="sc"><div class="sl">Дебиторка</div><div class="sv" style="color:#d97706;font-size:13px">${fmtN(unpaidSum)}</div><div class="ss">${unpaid.length} дог.</div></div>
+      <div class="sc"><div class="sl">Рентабельность</div><div class="sv" style="color:${gp>=0?'#15803d':'#dc2626'}">${gc>0?Math.round(gp/gt*100):0}%</div></div>
+    </div>
+    <div class="fpage">
+      <!-- ЖИВЫЕ ДЕНЬГИ -->
+      <div style="background:linear-gradient(135deg,#0f1923,#1a2d45);border-radius:12px;padding:20px;margin-bottom:14px;color:#fff">
+        <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px">💵 Живые деньги</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">✅ Получено</div>
+            <div style="font-size:20px;font-weight:700;color:#86efac">${fmtN(paidSum)}</div>
+            <div style="font-size:11px;color:#6ee7b7;margin-top:2px">${paid.length} договоров</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">📤 Затраты</div>
+            <div style="font-size:20px;font-weight:700;color:#fca5a5">${fmtN(paidCosts)}</div>
+            <div style="font-size:11px;color:#f87171;margin-top:2px">${paidSum?Math.round(paidCosts/paidSum*100):0}%</div>
+          </div>
+          <div style="background:rgba(21,128,61,.2);border:1px solid rgba(21,128,61,.4);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#86efac;margin-bottom:4px">🟢 Чистая прибыль</div>
+            <div style="font-size:22px;font-weight:700;color:${realProfit>=0?'#4ade80':'#f87171'}">${fmtN(realProfit)}</div>
+            <div style="font-size:11px;color:#86efac;margin-top:2px">${paidSum>0?Math.round(realProfit/paidSum*100):0}% маржа</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">⏳ Ожидается</div>
+            <div style="font-size:20px;font-weight:700;color:#fde68a">${fmtN(unpaidSum)}</div>
+            <div style="font-size:11px;color:#fbbf24;margin-top:2px">${unpaid.length} договоров</div>
+          </div>
+          <div style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:#a5b4fc;margin-bottom:4px">🚀 Потенциал</div>
+            <div style="font-size:20px;font-weight:700;color:#c4b5fd">${fmtN(gp)}</div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-bottom:5px">
+            <span>Оплачено ${pct}%</span><span>${fmtN(paidSum)} из ${fmtN(gt)}</span>
+          </div>
+          <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#15803d,#4ade80);border-radius:4px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ТОП-5 И РЕНТАБЕЛЬНОСТЬ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="acard"><div class="actitle">🏆 Топ-5 прибыльных</div>
+          ${top5.length ? top5.map((r, i) => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px">
+              <span style="font-weight:700;color:#6b7280;min-width:16px">${i+1}</span>
+              <div style="flex:1;min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.org}</div><div style="font-size:10px;color:#9ca3af">${r.item||'—'}</div></div>
+              <span class="pp">${fmtN(r.profit)}</span>
+            </div>`).join('') : '<div style="color:#9ca3af;font-size:12px">Нет данных о затратах</div>'}
+        </div>
+        <div class="acard"><div class="actitle">🏢 Рентабельность по фирмам</div>
+          ${Object.entries(firmProfit).map(([k, v]) => {
+            const pct2 = v.sum ? Math.round((v.sum - v.costs)/v.sum*100) : 0;
+            return `<div style="margin-bottom:8px;font-size:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><span style="font-weight:700;color:${pct2>=0?'#15803d':'#dc2626'}">${pct2}%</span></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(100,Math.max(0,pct2))}%;background:${pct2>=0?'#15803d':'#dc2626'};border-radius:3px"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- ДЕБИТОРКА -->
+      <div class="acard" style="margin-bottom:12px"><div class="actitle">⚠️ Дебиторская задолженность</div>
+        <table class="ftable" style="margin-top:8px">
+          <thead><tr><th>№</th><th>Организация</th><th>Предмет</th><th>Сумма</th></tr></thead>
+          <tbody>
+            ${unpaid.slice(0, 10).map((r, i) => `<tr><td>${i+1}</td><td style="font-size:12px">${r.org}</td><td style="font-size:12px">${r.item||'—'}</td><td style="font-weight:600;color:#d97706">${fmtN(r.total)}</td></tr>`).join('')}
+            <tr style="font-weight:700;background:#fff7ed"><td colspan="3" style="text-align:right;padding-right:12px">ИТОГО:</td><td style="color:#d97706">${fmtN(unpaidSum)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ПОЛНАЯ ТАБЛИЦА -->
+      <div class="acard"><div class="actitle">📊 Все договора (план vs факт)</div>
+        <table class="ftable" style="margin-top:8px">
+          <thead><tr><th>№</th><th>Закупка</th><th>Организация</th><th>Предмет</th><th>Сумма</th><th>Затраты</th><th>Прибыль</th><th>Оплата</th></tr></thead>
+          <tbody>
+            ${rows.map((r, i) => `<tr>
+              <td>${i+1}</td>
+              <td style="font-size:11px;font-family:monospace">${r.code||'—'}</td>
+              <td style="font-size:11px;max-width:140px">${r.org}</td>
+              <td style="font-size:11px;max-width:150px">${r.item||'—'}</td>
+              <td style="font-weight:600">${fmtN(r.total)}</td>
+              <td style="color:#dc2626">${r.ct ? fmtN(r.ct) : '—'}</td>
+              <td class="${r.hasCosts?(r.profit>=0?'pp':'pn'):''}">${r.hasCosts?fmtN(r.profit):'—'}</td>
+              <td>${r.payment_status==='paid'?'<span class="bdg bg">Оплачено</span>':'<span class="bdg br">Не опл.</span>'}</td>
+            </tr>`).join('')}
+            <tr style="background:#f9fafb;font-weight:700">
+              <td colspan="4" style="text-align:right;padding-right:12px">ИТОГО:</td>
+              <td>${fmtN(gt)}</td>
+              <td class="pn">${fmtN(gc)}</td>
+              <td class="${gp>=0?'pp':'pn'}">${fmtN(gp)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+
+// === expenses.js ===
+// ===== АДМИНИСТРАТИВНЫЕ РАСХОДЫ =====
+
+let expenseCategories = [];
+let expenseRecords = {};
+let admDragSrcId = null;
+let admResizing = null;
+let admColWidths = JSON.parse(localStorage.getItem('kd_adm_cw') || '{}');
+
+async function loadExpenses() {
+  try {
+    const [cats, records] = await Promise.all([
+      supabase.query('expense_categories', { select: '*', order: 'sort_order.asc' }),
+      supabase.query('expense_records', { select: '*', order: 'created_at.asc' })
+    ]);
+    expenseCategories = cats || [];
+    expenseRecords = {};
+    (records || []).forEach(r => {
+      if (!expenseRecords[r.category_id]) expenseRecords[r.category_id] = [];
+      expenseRecords[r.category_id].push(r);
+    });
+  } catch(e) { console.error('Load expenses error:', e); }
+}
+
+async function admAddCat() {
+  const name = prompt('Название категории:');
+  if (!name?.trim()) return;
+  try {
+    const result = await supabase.insert('expense_categories', {
+      name: name.trim(),
+      sort_order: expenseCategories.length
+    });
+    expenseCategories.push(result[0]);
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function admDelCat(id) {
+  if (!confirm('Удалить категорию и все записи?')) return;
+  try {
+    await supabase.delete('expense_categories', id);
+    expenseCategories = expenseCategories.filter(c => c.id !== id);
+    delete expenseRecords[id];
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function admEditCat(id) {
+  const cat = expenseCategories.find(c => c.id === id);
+  if (!cat) return;
+  const name = prompt('Новое название:', cat.name);
+  if (!name?.trim()) return;
+  try {
+    await supabase.update('expense_categories', id, { name: name.trim() });
+    cat.name = name.trim();
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function admAddCell(catId) {
+  const sEl = document.getElementById('adm-s-' + catId);
+  const cEl = document.getElementById('adm-c-' + catId);
+  const s = parseFloat((sEl?.value || '').replace(/\s/g, '').replace(',', '.'));
+  const c = cEl?.value?.trim() || '';
+  if (!s || s <= 0) { if (sEl) sEl.style.borderColor = 'red'; return; }
+  try {
+    const result = await supabase.insert('expense_records', {
+      category_id: catId, amount: s, comment: c
+    });
+    if (!expenseRecords[catId]) expenseRecords[catId] = [];
+    expenseRecords[catId].push(result[0]);
+    if (sEl) sEl.value = '';
+    if (cEl) cEl.value = '';
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function admShowInput(catId, btn) {
+  const td = btn.closest('td');
+  td.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px 4px">
+    <input placeholder="Сумма" type="number" id="adm-s-${catId}" style="width:100%;padding:4px 6px;border:1px solid #bfdbfe;border-radius:4px;font-size:12px;font-family:inherit;outline:none;text-align:right" onkeydown="if(event.key==='Enter')admAddCell('${catId}')">
+    <input placeholder="Комментарий" type="text" id="adm-c-${catId}" style="width:100%;padding:4px 6px;border:1px solid #bfdbfe;border-radius:4px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')admAddCell('${catId}')">
+  </div>`;
+  document.getElementById('adm-s-' + catId)?.focus();
+}
+
+async function admEditCell(catId, recordId, field) {
+  const records = expenseRecords[catId] || [];
+  const r = records.find(x => x.id === recordId);
+  if (!r) return;
+  const cur = field === 'amount' ? r.amount : r.comment;
+  const val = prompt(field === 'amount' ? 'Новая сумма:' : 'Новый комментарий:', cur || '');
+  if (val === null) return;
+  const update = {};
+  if (field === 'amount') {
+    const n = parseFloat(val.replace(/\s/g, '').replace(',', '.'));
+    if (!n || n <= 0) return;
+    update.amount = n;
+  } else {
+    update.comment = val.trim();
+  }
+  try {
+    await supabase.update('expense_records', recordId, update);
+    Object.assign(r, update);
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function admDelRow(catId, recordId) {
+  try {
+    await supabase.delete('expense_records', recordId);
+    expenseRecords[catId] = (expenseRecords[catId] || []).filter(r => r.id !== recordId);
+    renderExpensesPage();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+// Column drag
+function admColDragStart(e, catId) {
+  admDragSrcId = catId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '.5';
+}
+function admColDragOver(e, catId) {
+  e.preventDefault();
+  document.querySelectorAll('.adm-th-drag').forEach(el => el.classList.remove('adm-th-drag-over'));
+  if (catId !== admDragSrcId) e.currentTarget.classList.add('adm-th-drag-over');
+}
+async function admColDrop(e, targetId) {
+  e.preventDefault();
+  document.querySelectorAll('.adm-th-drag').forEach(el => el.classList.remove('adm-th-drag-over'));
+  if (!admDragSrcId || admDragSrcId === targetId) return;
+  const si = expenseCategories.findIndex(c => c.id === admDragSrcId);
+  const ti = expenseCategories.findIndex(c => c.id === targetId);
+  if (si < 0 || ti < 0) return;
+  const [moved] = expenseCategories.splice(si, 1);
+  expenseCategories.splice(ti, 0, moved);
+  admDragSrcId = null;
+  renderExpensesPage();
+  // Save sort orders
+  await Promise.all(expenseCategories.map((c, i) => supabase.update('expense_categories', c.id, { sort_order: i })));
+}
+function admColDragEnd() {
+  admDragSrcId = null;
+  document.querySelectorAll('.adm-th-drag').forEach(el => { el.style.opacity = ''; el.classList.remove('adm-th-drag-over'); });
+}
+
+// Column resize
+function admResizerStart(e, catId) {
+  e.preventDefault(); e.stopPropagation();
+  const th = e.target.closest('th');
+  admResizing = { catId, th, startX: e.clientX, startW: th.getBoundingClientRect().width };
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
+document.addEventListener('mousemove', e => {
+  if (!admResizing) return;
+  const w = Math.max(140, admResizing.startW + (e.clientX - admResizing.startX));
+  admResizing.th.style.minWidth = w + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (!admResizing) return;
+  admColWidths[admResizing.catId] = admResizing.th.getBoundingClientRect().width;
+  localStorage.setItem('kd_adm_cw', JSON.stringify(admColWidths));
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  admResizing = null;
+});
+
+async function renderExpensesPage(m) {
+  if (!m) m = document.getElementById('main');
+  if (currentRole !== 'admin') {
+    m.innerHTML = '<div class="nodata">Доступно только администратору</div>';
+    return;
+  }
+  
+  if (expenseCategories.length === 0) await loadExpenses();
+  
+  const totalAll = expenseCategories.reduce((s, cat) =>
+    s + (expenseRecords[cat.id] || []).reduce((ss, r) => ss + Number(r.amount), 0), 0);
+  const maxRows = Math.max(...expenseCategories.map(cat => (expenseRecords[cat.id] || []).length), 0);
+
+  m.style.cssText = 'display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0';
+  m.innerHTML = `
+    <div class="stats">
+      <div class="sc"><div class="sl">Категорий</div><div class="sv">${expenseCategories.length}</div></div>
+      <div class="sc"><div class="sl">Всего расходов</div><div class="sv" style="color:#dc2626;font-size:13px">${fmtN(totalAll)}</div></div>
+    </div>
+    <div style="padding:0 14px 6px;display:flex;gap:8px;flex-shrink:0;align-items:center">
+      <button class="btn btn-p" onclick="admAddCat()">+ Добавить колонку</button>
+      <button onclick="document.getElementById('admScroll').scrollBy({left:-300,behavior:'smooth'})" style="padding:4px 12px;background:#1e293b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:14px">◀</button>
+      <button onclick="document.getElementById('admScroll').scrollBy({left:300,behavior:'smooth'})" style="padding:4px 12px;background:#1e293b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:14px">▶</button>
+    </div>
+    <div id="admScroll" style="flex:1;overflow:auto;padding:0 14px 14px">
+      <table id="admTable" style="border-collapse:collapse;min-width:max-content;width:auto">
+        <thead>
+          <tr style="background:#0f1923;color:#fff;position:sticky;top:0;z-index:10">
+            <th style="padding:8px 12px;font-size:11px;font-weight:600;border:1px solid #1e293b;min-width:40px;background:#0f1923;color:#fff">#</th>
+            ${expenseCategories.map(cat => {
+              const catTotal = (expenseRecords[cat.id] || []).reduce((s, r) => s + Number(r.amount), 0);
+              const w = admColWidths[cat.id] ? `min-width:${admColWidths[cat.id]}px;width:${admColWidths[cat.id]}px` : 'min-width:220px';
+              return `<th draggable="true" data-catid="${cat.id}" class="adm-th-drag" style="padding:0;border:1px solid #1e293b;${w};background:#0f1923;position:relative"
+                ondragstart="admColDragStart(event,'${cat.id}')"
+                ondragover="admColDragOver(event,'${cat.id}')"
+                ondrop="admColDrop(event,'${cat.id}')"
+                ondragend="admColDragEnd()">
+                <div style="display:flex;flex-direction:column;gap:2px;padding:6px 10px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                    <span style="font-size:12px;font-weight:700;white-space:nowrap;color:#fff">⠿ ${cat.name}</span>
+                    <div style="display:flex;gap:3px;flex-shrink:0">
+                      <button onclick="admEditCat('${cat.id}')" style="background:rgba(255,255,255,.1);border:none;border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:#fff">✏️</button>
+                      <button onclick="admDelCat('${cat.id}')" style="background:rgba(220,38,38,.3);border:none;border-radius:3px;padding:1px 5px;font-size:10px;cursor:pointer;color:#fca5a5">✕</button>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:#fca5a5;font-weight:600">Итого: ${fmtN(catTotal)}</div>
+                </div>
+                <div class="adm-col-resizer" onmousedown="admResizerStart(event,'${cat.id}')"></div>
+              </th>`;
+            }).join('')}
+            <th style="padding:8px;border:1px solid #1e293b;min-width:44px;background:#0f1923">
+              <button onclick="admAddCat()" style="background:rgba(255,255,255,.15);border:none;border-radius:4px;padding:3px 8px;color:#fff;cursor:pointer;font-size:14px;font-weight:700">+</button>
+            </th>
+          </tr>
+          <tr style="background:#1e293b;position:sticky;top:41px;z-index:9">
+            <th style="padding:5px 12px;font-size:9px;color:#94a3b8;border:1px solid #334155">#</th>
+            ${expenseCategories.map(() => `
+              <th style="padding:4px 8px;border:1px solid #334155">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                  <span style="font-size:9px;color:#60a5fa;font-weight:600;text-align:right">СУММА</span>
+                  <span style="font-size:9px;color:#94a3b8;font-weight:600">КОММЕНТАРИЙ</span>
+                </div>
+              </th>`).join('')}
+            <th style="border:1px solid #334155"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Array.from({ length: maxRows + 3 }, (_, rowIdx) => {
+            return `<tr style="${rowIdx % 2 === 0 ? 'background:#fff' : 'background:#f9fafb'}">
+              <td style="padding:6px 10px;font-size:11px;color:#9ca3af;text-align:center;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">${rowIdx < maxRows ? rowIdx + 1 : ''}</td>
+              ${expenseCategories.map(cat => {
+                const records = expenseRecords[cat.id] || [];
+                const r = records[rowIdx];
+                if (r) {
+                  return `<td style="padding:0;border:1px solid #e5e7eb;position:relative" class="adm-data-cell">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;min-height:32px">
+                      <div onclick="admEditCell('${cat.id}','${r.id}','amount')" style="padding:6px 8px;text-align:right;font-weight:600;color:#111827;font-size:12px;cursor:pointer;border-right:1px solid #f0f4f8" title="Нажмите для изменения">${fmtN(r.amount)}</div>
+                      <div onclick="admEditCell('${cat.id}','${r.id}','comment')" style="padding:6px 8px;font-size:12px;color:#374151;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px" title="${r.comment||''}">${r.comment || '—'}</div>
+                    </div>
+                    <button onclick="admDelRow('${cat.id}','${r.id}')" class="adm-del-cell-btn" title="Удалить">✕</button>
+                  </td>`;
+                } else {
+                  return `<td style="padding:2px 6px;border:1px solid #e5e7eb;background:#fff" class="adm-empty-cell">
+                    <div style="display:flex;align-items:center;justify-content:center;min-height:28px">
+                      <button onclick="admShowInput('${cat.id}',this)" style="opacity:0;background:#eff6ff;border:1px dashed #bfdbfe;border-radius:4px;padding:2px 10px;font-size:13px;color:#1a56db;cursor:pointer" class="adm-plus-btn" title="Добавить">+</button>
+                    </div>
+                  </td>`;
+                }
+              }).join('')}
+              <td style="border:1px solid #e5e7eb"></td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:#0f1923;color:#fff;position:sticky;bottom:0">
+            <td style="padding:8px 10px;font-size:11px;font-weight:700;border:1px solid #1e293b;text-align:center">∑</td>
+            ${expenseCategories.map(cat => {
+              const catTotal = (expenseRecords[cat.id] || []).reduce((s, r) => s + Number(r.amount), 0);
+              return `<td style="padding:8px 10px;border:1px solid #1e293b">
+                <div style="display:grid;grid-template-columns:1fr 1fr">
+                  <div style="text-align:right;font-weight:700;color:#fff;font-size:13px">${fmtN(catTotal)}</div>
+                  <div></div>
+                </div>
+              </td>`;
+            }).join('')}
+            <td style="border:1px solid #1e293b"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+
+// === grok.js ===
+// ===== GROK AI =====
+const GROK_KEY = 'xai-ZYQCQn0x8Nof5NOFw1H58tpcjAwgjOOns8rFiVhXbAbNSmoTo87V3z2V44nXTmNs4tJxscvRVXYR1Uq9';
+let grokHistory = [];
+
+function toggleGrok() {
+  document.getElementById('grokPanel').classList.toggle('open');
+}
+
+function getDataContext() {
+  const paid = contracts.filter(r => r.payment_status === 'paid');
+  const tot = contracts.reduce((s, r) => s + Number(r.total || 0), 0);
+  const paidSum = paid.reduce((s, r) => s + Number(r.total || 0), 0);
+  const costsTotal = contracts.reduce((s, r) => s + getCosts(r.id).reduce((ss, c) => ss + Number(c.amount), 0), 0);
+  const admTotal = expenseCategories.reduce((s, cat) =>
+    s + (expenseRecords[cat.id] || []).reduce((ss, r) => ss + Number(r.amount), 0), 0);
+
+  return 'Данные КазДемеу:\n' +
+    'Договоров: ' + contracts.length + '\n' +
+    'Оплачено: ' + paid.length + ' на ' + fmtN(paidSum) + '\n' +
+    'Не оплачено: ' + (contracts.length - paid.length) + ' на ' + fmtN(tot - paidSum) + '\n' +
+    'Общая сумма: ' + fmtN(tot) + '\n' +
+    'Затраты: ' + fmtN(costsTotal) + '\n' +
+    'Прибыль: ' + fmtN(paidSum - costsTotal) + '\n' +
+    'Адм. расходы: ' + fmtN(admTotal) + '\n\n' +
+    'Договора (первые 15):\n' +
+    contracts.slice(0, 15).map(r =>
+      '- ' + (r.code || '—') + ': ' + r.org + ', ' + (r.item || '—') + ', ' +
+      r.qty + ' шт, ' + fmtN(r.total) + ', ' +
+      (r.payment_status === 'paid' ? 'ОПЛАЧЕНО' : 'НЕ ОПЛАЧЕНО')
+    ).join('\n');
+}
+
+async function grokSend() {
+  const inp = document.getElementById('grokInput');
+  const msg = (inp.value || '').trim();
+  if (!msg) return;
+  inp.value = '';
+  await grokAsk(msg);
+}
+
+async function grokAsk(question) {
+  const msgs = document.getElementById('grokMessages');
+  const btn = document.getElementById('grokSendBtn');
+
+  // Add user message
+  const uDiv = document.createElement('div');
+  uDiv.className = 'grok-msg user';
+  uDiv.textContent = question;
+  msgs.appendChild(uDiv);
+
+  // Loading
+  const lDiv = document.createElement('div');
+  lDiv.className = 'grok-msg ai';
+  lDiv.id = 'grokLoading';
+  lDiv.innerHTML = '<span style="color:#9ca3af;font-style:italic">⏳ Думаю...</span>';
+  msgs.appendChild(lDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = true;
+
+  grokHistory.push({ role: 'user', content: question });
+
+  try {
+    const systemPrompt = 'Ты AI-ассистент системы КазДемеу. Отвечай кратко на русском языке.\n\n' + getDataContext();
+
+    const resp = await fetch('https://corsproxy.io/?url=https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GROK_KEY
+      },
+      body: JSON.stringify({
+        model: 'grok-3-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...grokHistory.slice(-10)
+        ],
+        max_tokens: 1200,
+        temperature: 0.7
+      })
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const answer = data.choices?.[0]?.message?.content || 'Нет ответа';
+    grokHistory.push({ role: 'assistant', content: answer });
+
+    const formatted = answer
+      .split('\n').join('<br>')
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+    lDiv.innerHTML = formatted;
+  } catch(e) {
+    lDiv.innerHTML = '<span style="color:#dc2626">❌ Ошибка подключения к Grok. Попробуйте снова.</span>';
+console.error('Grok error:', e);
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = false;
+}
+
+
+// === app.js ===
+// ===== ГЛАВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ =====
+
+let currentPage = 'contracts';
+let zoomLvl = parseFloat(ls('kd_zoom', '1'));
+
+// ===== ZOOM =====
+function zoom(d) {
+  if (d === 0) zoomLvl = 1;
+  else if (d > 0) zoomLvl = Math.min(2, +(zoomLvl + 0.1).toFixed(1));
+  else zoomLvl = Math.max(0.4, +(zoomLvl - 0.1).toFixed(1));
+  applyZoom();
+}
+function applyZoom() {
+  document.getElementById('app').style.zoom = zoomLvl;
+  document.getElementById('zlbl').textContent = Math.round(zoomLvl * 100) + '%';
+  lsw('kd_zoom', zoomLvl);
+}
+document.addEventListener('wheel', e => {
+  if (!e.ctrlKey) return;
+  e.preventDefault();
+  zoom(e.deltaY < 0 ? 1 : -1);
+}, { passive: false });
+
+// ===== NAVIGATION =====
+function goPage(p) {
+  currentPage = p;
+  
+  if (currentRole === 'admin') {
+    document.getElementById('navtabs').innerHTML = `
+      <span class="ntab ${p === 'contracts' ? 'active' : ''}" onclick="goPage('contracts')">📄 Договора</span>
+      <span class="ntab ext" onclick="openTab('analytics')">📊 Аналитика ↗</span>
+      <span class="ntab ext" onclick="openTab('finance')">💰 Финансы ↗</span>
+      <span class="ntab ${p === 'expenses' ? 'active' : ''}" onclick="goPage('expenses')">🏢 Адм. расходы</span>`;
+  }
+  
+  const m = document.getElementById('main');
+  if (p === 'contracts') renderContractsPage(m);
+  else if (p === 'analytics') renderAnalyticsPage(m);
+  else if (p === 'finance') renderFinancePage(m);
+  else if (p === 'expenses') renderExpensesPage(m);
+}
+
+function openTab(p) {
+  lsw('kd_open', { p, r: currentRole });
+  const loc = window.location.href.split('#')[0];
+  window.open(loc + '#' + p, '_blank');
+}
+
+// Check if opened as analytics/finance tab
+
+// ===== SCROLL =====
+function scrollTbl(dy) {
+  const el = document.querySelector('.tscroll');
+  if (el) el.scrollBy({ top: dy, behavior: 'smooth' });
+}
+
+// ===== RENDER CONTRACTS PAGE =====
+function renderContractsPage(m) {
+  if (!m) m = document.getElementById('main');
+  const rows = filtered();
+  const all = contracts;
+  const paid = all.filter(r => r.payment_status === 'paid');
+  const tot = all.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  const BNR = {
+    admin:       ['b-blue',   '👑 Полный доступ'],
+    manager:     ['b-green',  '💼 Менеджер — цены скрыты'],
+    constructor: ['b-purple', '🔧 Конструктор — цены скрыты'],
+    technolog:   ['b-teal',   '⚙️ Технолог — цены скрыты'],
+    logist:      ['b-orange', '🚚 Логист — цены скрыты'],
+    goszakup:    ['b-red',    '📋 Госзакупщик']
+  };
+  const [bc, bt] = BNR[currentRole];
+
+  m.innerHTML = `
+    <div class="stats">
+      <div class="sc"><div class="sl">Всего</div><div class="sv">${all.length}</div><div class="ss">показано: ${rows.length}</div></div>
+      <div class="sc"><div class="sl">Оплачено</div><div class="sv" style="color:#15803d">${paid.length}</div></div>
+      <div class="sc"><div class="sl">Не оплачено</div><div class="sv" style="color:#dc2626">${all.length - paid.length}</div></div>
+      ${canPrice() ? `<div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(tot)}</div></div>` : ''}
+    </div>
+    <div class="banner ${bc}">${bt}</div>
+    ${showForm ? formHtml(!!editId) : ''}
+    <div class="toolbar">
+      ${canManage() ? `<button class="btn btn-p" onclick="startAdd()">+ Добавить</button>` : ''}
+      <div class="sbox"><span class="si">🔍</span><input id="sinp" placeholder="Поиск..." value="${searchQ}" oninput="onSearch(this.value)"></div>
+      <select class="fsel" onchange="filterFirm=this.value;renderContractsPage()">
+        <option value="">Все фирмы</option>
+        ${firms().map(f => `<option value="${f}" ${filterFirm === f ? 'selected' : ''}>${f}</option>`).join('')}
+      </select>
+    </div>
+    <div class="twrap">
+      <div class="thead-bar">
+        <span class="th-title">Договора</span>
+        <span class="cnt">${rows.length} записей</span>
+      </div>
+      <div class="tscroll" id="tscroll"><div id="tbody"></div></div>
+    </div>`;
+  
+  renderTable();
+  requestAnimationFrame(initResizers);
+}
+
+function renderTable() {
+  const rows = filtered();
+  const mr = myRoleKey();
+  const canDrag = canManage();
+  
+  const cols = [];
+  if (canDrag) cols.push({ k: 'drag', l: '' });
+  cols.push({ k: 'num', l: '№' });
+  if (canCosts()) cols.push({ k: 'costs', l: 'Затраты' });
+  if (currentRole === 'admin') cols.push({ k: 'stat', l: 'Статусы' });
+  if (mr) cols.push({ k: 'mystat', l: 'Статус' });
+  cols.push({ k: 'files', l: 'Файлы' });
+  cols.push({ k: 'code', l: 'Номер закупки' });
+  cols.push({ k: 'firm', l: 'Фирма' });
+  cols.push({ k: 'org', l: 'Организация' });
+  cols.push({ k: 'item', l: 'Предмет' });
+  cols.push({ k: 'qty', l: 'Кол-во' });
+  if (canPrice()) {
+    cols.push({ k: 'price', l: 'Цена' });
+    cols.push({ k: 'total', l: 'Сумма' });
+  }
+  if (currentRole === 'admin' || currentRole === 'manager') cols.push({ k: 'pay', l: 'Оплата' });
+  cols.push({ k: 'loc', l: 'Место поставки' });
+  cols.push({ k: 'dl', l: 'Срок' });
+  cols.push({ k: 'con', l: '№ договора' });
+  cols.push({ k: 'ph', l: 'Телефон' });
+  cols.push({ k: 'sig', l: 'Подписан' });
+  cols.push({ k: 'dev', l: 'Исполнение' });
+  if (canManage()) cols.push({ k: 'act', l: 'Действия' });
+
+  let h = `<table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}</tr></thead><tbody>`;
+
+  rows.forEach((r, i) => {
+    const isNew = (new Date() - new Date(r.created_at)) < 86400000 * 3;
+    const isEdit = editId === r.id;
+    const exp = expandedRows.has(r.id);
+    const cl = getCosts(r.id);
+    const cs = cl.reduce((s, c) => s + Number(c.amount), 0);
+    const fl = getFiles(r.id);
+    const pay = r.payment_status === 'paid'
+      ? '<span class="bdg bg">Оплачено</span>'
+      : '<span class="bdg br">Не оплачено</span>';
+
+    const tds = cols.map(c => {
+      switch(c.k) {
+        case 'drag':   return `<td><div class="td"><span class="dh" draggable="false">⠿</span></div></td>`;
+        case 'num':    return `<td><div class="td" style="color:#9ca3af;font-weight:600">${i+1}</div></td>`;
+        case 'costs':  return `<td><div class="td"><button class="btn btn-g" style="font-size:11px;padding:2px 7px" onclick="toggleExp('${r.id}')">${exp?'▾':'▸'} ${cl.length ? `💸${cl.length}·${fmtN(cs)}` : '+'}</button></div></td>`;
+        case 'stat':   return `<td><div class="td" style="min-width:120px" data-src="${r.id}">${statusCellHtml(r.id)}</div></td>`;
+        case 'mystat': return `<td><div class="td">${statusSel(r.id, mr)}</div></td>`;
+        case 'files':  return `<td><div class="td" style="display:flex;align-items:center;gap:4px">
+          ${fl.length ? `<button class="btn btn-g" style="font-size:11px;padding:2px 6px" onclick="toggleExp('${r.id}')">📎${fl.length}</button>` : ''}
+          <button onclick="addFileLink('${r.id}')" title="Добавить файл" style="width:22px;height:22px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;cursor:pointer;color:#1a56db;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">+</button>
+        </div></td>`;
+        case 'code':   return `<td><div class="td" style="font-size:11px;font-family:monospace;max-width:150px">${r.code || '—'}${isNew ? '<span class="bdg bnew" style="margin-left:4px">new</span>' : ''}</div></td>`;
+        case 'firm':   return `<td><div class="td"><span class="bdg bfirm">${r.firm || '—'}</span></div></td>`;
+        case 'org':    return `<td><div class="td" style="max-width:170px;font-size:12px">${r.org || '—'}</div></td>`;
+        case 'item':   return `<td><div class="td" style="max-width:190px">${r.item || '—'}</div></td>`;
+        case 'qty':    return `<td><div class="td" style="font-weight:700;font-size:14px">${r.qty || '—'}</div></td>`;
+        case 'price':  return `<td><div class="td" style="color:#1d4ed8;font-weight:600;white-space:nowrap">${r.price ? fmtN(r.price) : '—'}</div></td>`;
+        case 'total':  return `<td><div class="td" style="font-weight:600;white-space:nowrap">${r.total ? fmtN(r.total) : '—'}</div></td>`;
+        case 'pay':
+          if (currentRole === 'admin')
+            return `<td><div class="td"><button onclick="togglePay('${r.id}')" style="border:none;background:none;cursor:pointer;padding:0">${pay}</button></div></td>`;
+          return `<td><div class="td">${pay}</div></td>`;
+        case 'loc':    return `<td><div class="td" style="max-width:140px;font-size:11px">${r.location || '—'}</div></td>`;
+        case 'dl':     return `<td><div class="td" style="max-width:150px;font-size:11px">${r.deadline || '—'}</div></td>`;
+        case 'con':    return `<td><div class="td" style="font-size:11px;font-family:monospace">${r.contract_number || '—'}</div></td>`;
+        case 'ph':     return `<td><div class="td" style="font-size:11px">${r.phone || '—'}</div></td>`;
+        case 'sig':    return `<td><div class="td" style="font-size:11px">${r.signed_date || '—'}</div></td>`;
+        case 'dev':    return `<td><div class="td" style="font-size:11px">${r.delivery_date || '—'}</div></td>`;
+        case 'act':    return `<td><div class="td" style="display:flex;gap:3px;align-items:center">
+          <button class="cdel" style="color:#1d4ed8;opacity:.7" onclick="startEdit('${r.id}')" title="Редактировать">✏️</button>
+          <button class="cdel" onclick="deleteRow('${r.id}')" title="Удалить">🗑</button>
+          <button onclick="toggleVisibility('${r.id}')" title="${r.is_visible ? 'Скрыть' : 'Показать'}" style="background:none;border:none;cursor:pointer;font-size:13px;opacity:.7">${r.is_visible ? '👁' : '🙈'}</button>
+        </div></td>`;
+        default: return '<td></td>';
+      }
+    }).join('');
+
+    h += `<tr data-id="${r.id}" class="${exp ? 'xrow' : ''}" style="${isEdit ? 'outline:2px solid #1a56db;background:#eff6ff' : ''}"
+      ${canDrag ? `draggable="true" ondragstart="onDS(event,'${r.id}')" ondragend="onDE()" ondragover="onDO(event,'${r.id}')" ondrop="onDrop(event,'${r.id}')"` : ''}>
+      ${tds}</tr>`;
+
+    if (exp) {
+      h += `<tr><td colspan="${cols.length}" style="padding:0"><div class="xpanel"><div class="xinner">
+        ${canCosts() ? costsHtml(r, currentRole === 'admin') : ''}
+        ${filesHtml(r.id, true, canDelFile())}
+      </div></div></td></tr>`;
+    }
+  });
+
+  h += `</tbody></table>${!rows.length ? '<div class="nodata">🔍 Ничего не найдено</div>' : ''}`;
+  const tb = document.getElementById('tbody');
+  if (tb) tb.innerHTML = h;
+  requestAnimationFrame(initResizers);
+}
+
+// ===== EXPORT/IMPORT =====
+function exportData() {
+  const data = {
+    contracts,
+    contractCosts,
+    contractFiles,
+    contractStatuses,
+    exported: new Date().toLocaleString('ru-RU')
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `КазДемеу_${new Date().toLocaleDateString('ru-RU').replace(/\./g, '-')}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      alert(`✅ Данные загружены!\nДоговоров: ${d.contracts?.length || 0}`);
+      e.target.value = '';
+    } catch { alert('❌ Неверный формат файла'); }
+  };
+  r.readAsText(file);
+}
+
+
+// Normal login - DOM already ready since scripts are at bottom
+if (typeof initLogin === 'function') {
+  initLogin();
+} else {
+  // Fallback: render roles inline
+  var _roles = {
+    admin:       {l:'Администратор',i:'👑',c:'#1e3a8a',d:'Полный доступ'},
+    manager:     {l:'Менеджер',     i:'💼',c:'#064e3b',d:'Заказы (без цен)'},
+    constructor: {l:'Конструктор',  i:'🔧',c:'#4c1d95',d:'Технические данные'},
+    technolog:   {l:'Технолог',     i:'⚙️',c:'#134e4a',d:'Технологические данные'},
+    logist:      {l:'Логист',       i:'🚚',c:'#0c4a6e',d:'Доставка и сроки'},
+    goszakup:    {l:'Госзакупщик',  i:'📋',c:'#881337',d:'Добавление/удаление'}
+  };
+  var _list = document.getElementById('rlist');
+  if (_list) {
+    _list.innerHTML = Object.entries(_roles).map(function(e){
+      return '<div class="ritem" onclick="selectRole(\''+e[0]+'\')" data-r="'+e[0]+'">' +
+        '<div class="rico" style="background:'+e[1].c+';color:#fff">'+e[1].i+'</div>' +
+        '<div class="rinfo"><b>'+e[1].l+'</b><span>'+e[1].d+'</span></div></div>';
+    }).join('');
+  }
+}
+
+// Check DB
+var _btn = document.getElementById('sbStatus');
+supabase.query('contracts', { select: 'id', limit: 1 })
+  .then(function(){ if(_btn){_btn.textContent='🟢 DB';_btn.style.color='#86efac';} })
+  .catch(function(){ if(_btn){_btn.textContent='🔴 DB';_btn.style.color='#fca5a5';} });
+
+// Hash routing for analytics/finance tabs
+var _hash = window.location.hash.replace('#','');
+if (_hash && ['analytics','finance'].includes(_hash)) {
+  var _open = ls('kd_open', null);
+  if (_open && _open.r) {
+    currentRole = _open.r;
+    lsw('kd_open', null);
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('tbadge').textContent = ROLES[currentRole].l;
+    document.getElementById('tbadge').style.cssText = BADGES[currentRole];
+    document.getElementById('snav').style.display = 'flex';
+    document.getElementById('navtabs').style.display = 'flex';
+    document.getElementById('navtabs').innerHTML =
+      '<span class="ntab" onclick="window.close()" style="color:#f87171">← Назад</span>' +
+      '<span class="ntab active">' + (_hash==='analytics'?'📊 Аналитика':'💰 Финансы') + '</span>' +
+      '<span class="ntab" onclick="location.reload()" style="color:#60a5fa">🔄 Обновить</span>';
+    applyZoom();
+    loadAllData().then(function(m2) {
+      var m = document.getElementById('main');
+      if (_hash==='analytics') renderAnalyticsPage(m);
+      else renderFinancePage(m);
+    });
+  }
+}
+</script>
+</body>
+</html>
