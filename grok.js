@@ -1,9 +1,8 @@
 // === grok.js ===
 // ===== GROK AI =====
-// GROK_KEY перенесён в Cloudflare Worker (grok-proxy/worker.js)
-// После деплоя воркера замените URL ниже на ваш workers.dev адрес
-const GROK_PROXY_URL = 'https://api.x.ai/v1/chat/completions'; // <-- временно прямой, заменить на proxy URL
-const GROK_KEY = 'xai-ZYQCQn0x8Nof5NOFw1H58tpcjAwgjOOns8rFiVhXbAbNSmoTo87V3z2V44nXTmNs4tJxscvRVXYR1Uq9'; // удалить после деплоя proxy
+// Ключ xAI хранится только в Cloudflare Worker (grok-proxy/worker.js).
+// После деплоя воркера замените GROK_PROXY_URL на ваш workers.dev адрес.
+const GROK_PROXY_URL = 'https://kd-gro.aliaskhat96.workers.dev';
 let grokHistory = [];
 
 function toggleGrok() {
@@ -40,25 +39,21 @@ async function grokSend() {
 async function grokAsk(msg) {
   const msgs = document.getElementById('grokMessages');
   const btn = document.getElementById('grokSendBtn');
-  
-  // Add user message
-  msgs.innerHTML += `<div class="grok-msg user">${msg}</div>`;
+
+  msgs.innerHTML += `<div class="grok-msg user">${esc(msg)}</div>`;
   msgs.scrollTop = msgs.scrollHeight;
-  
+
   btn.disabled = true;
   btn.textContent = '...';
-  
+
   grokHistory.push({ role: 'user', content: msg });
-  
+
   const systemPrompt = `Ты AI-ассистент системы КазДемеу — управление договорами. Отвечай кратко и по делу на русском языке.\n\n${getDataContext()}`;
-  
+
   try {
-    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    const res = await fetch(GROK_PROXY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROK_KEY}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'grok-3-mini',
         messages: [
@@ -68,19 +63,20 @@ async function grokAsk(msg) {
         max_tokens: 500
       })
     });
-    
-    if (!res.ok) throw new Error('API error: ' + res.status);
+
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.error || 'API error: ' + res.status);
+
     const reply = data.choices?.[0]?.message?.content || 'Нет ответа';
-    
+
     grokHistory.push({ role: 'assistant', content: reply });
-    msgs.innerHTML += `<div class="grok-msg ai">${reply.replace(/\n/g, '<br>')}</div>`;
+    msgs.innerHTML += `<div class="grok-msg ai">${esc(reply).replace(/\n/g, '<br>')}</div>`;
     msgs.scrollTop = msgs.scrollHeight;
-  } catch(e) {
-    msgs.innerHTML += `<div class="grok-msg ai" style="color:#ff4757">Ошибка: ${e.message}</div>`;
+  } catch (e) {
+    msgs.innerHTML += `<div class="grok-msg ai" style="color:#ff4757">Ошибка: ${esc(e.message)}</div>`;
     msgs.scrollTop = msgs.scrollHeight;
   }
-  
+
   btn.disabled = false;
   btn.textContent = 'Отправить';
 }
