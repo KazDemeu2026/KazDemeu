@@ -1,3 +1,4 @@
+// === supabase.js ===
 // ===== SUPABASE CLIENT =====
 const SUPABASE_URL = 'https://cbdvpzryztoyowprjtro.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHZwenJ5enRveW93cHJqdHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUxNTIsImV4cCI6MjA5NTkwMTE1Mn0.hd8CMF_sPxsy35KeRPGfjtHFcJWp4kTrvw_gbHtmFn0';
@@ -24,7 +25,9 @@ const supabase = {
       headers: {
         'apikey': this.key,
         'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'Accept-Charset': 'utf-8',
         'Prefer': 'return=representation'
       }
     });
@@ -39,7 +42,9 @@ const supabase = {
       headers: {
         'apikey': this.key,
         'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'Accept-Charset': 'utf-8',
         'Prefer': 'return=representation'
       },
       body: JSON.stringify(data)
@@ -57,7 +62,9 @@ const supabase = {
       headers: {
         'apikey': this.key,
         'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'Accept-Charset': 'utf-8',
         'Prefer': 'return=representation'
       },
       body: JSON.stringify(data)
@@ -117,3 +124,87 @@ const lsw = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catc
 // ===== FORMAT HELPERS =====
 const fmtN = n => Math.round(n).toLocaleString('ru-RU') + '₸';
 const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU') : '—';
+
+// ===== CRYPTO: SHA-256 PASSWORD HASHING =====
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Hash all plain-text passwords in storage on first run (migration)
+async function migratePasswords() {
+  const stored = ls('kd_passwords', {});
+  const hashed = ls('kd_pw_hashed', false);
+  if (hashed) return; // already migrated
+  const out = {};
+  for (const [k, v] of Object.entries(stored)) {
+    // if not already a 64-char hex hash, hash it
+    out[k] = (v && /^[0-9a-f]{64}$/.test(v)) ? v : await sha256(v);
+  }
+  // Also hash defaults for any missing key
+  for (const [k, v] of Object.entries(DEFAULT_PASSWORDS)) {
+    if (!out[k]) out[k] = await sha256(v);
+  }
+  lsw('kd_passwords', out);
+  lsw('kd_pw_hashed', true);
+  ROLE_PASSWORDS = out;
+}
+
+// Hash custom users' passwords on migration
+async function migrateCustomUsers() {
+  const hashed = ls('kd_cu_hashed', false);
+  if (hashed) return;
+  const users = ls('kd_custom_users', []);
+  for (const u of users) {
+    if (u.password && !/^[0-9a-f]{64}$/.test(u.password)) {
+      u.password = await sha256(u.password);
+    }
+  }
+  lsw('kd_custom_users', users);
+  lsw('kd_cu_hashed', true);
+  customUsers = users;
+}
+
+// ===== LOGIN RATE LIMITING =====
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+function getRateData(key) {
+  return ls('kd_rate_' + key, { count: 0, lockedUntil: 0 });
+}
+function recordFailedAttempt(key) {
+  const d = getRateData(key);
+  d.count = (d.count || 0) + 1;
+  d.lockedUntil = d.count >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : (d.lockedUntil || 0);
+  lsw('kd_rate_' + key, d);
+  return d;
+}
+function clearRate(key) { lsw('kd_rate_' + key, { count: 0, lockedUntil: 0 }); }
+function isLocked(key) {
+  const d = getRateData(key);
+  if (d.lockedUntil && Date.now() < d.lockedUntil) return Math.ceil((d.lockedUntil - Date.now()) / 60000);
+  return 0;
+}
+
+// ===== SESSION TOKEN =====
+const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
+function createSession(role, name) {
+  const token = { role, name, ts: Date.now(), exp: Date.now() + SESSION_TTL };
+  lsw('kd_session', token);
+  return token;
+}
+function getSession() {
+  const s = ls('kd_session', null);
+  if (!s || Date.now() > s.exp) { lsw('kd_session', null); return null; }
+  return s;
+}
+function clearSession() { lsw('kd_session', null); }
+
+// ===== XSS PROTECTION =====
+const esc = s => s == null ? '' : String(s)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+const escOr = (s, fallback='—') => s ? esc(s) : fallback;
