@@ -89,24 +89,133 @@ function exportData() {
 function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  event.target.value = '';
+
+  if (ext === 'json') {
+    // ── JSON backup ──────────────────────────────────────
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.contracts)        contracts        = data.contracts;
+        if (data.contractCosts)    contractCosts    = data.contractCosts;
+        if (data.contractFiles)    contractFiles    = data.contractFiles;
+        if (data.contractStatuses) contractStatuses = data.contractStatuses;
+        if (data.expenseCategories) expenseCategories = data.expenseCategories;
+        if (data.expenseRecords)   expenseRecords   = data.expenseRecords;
+        goPage(currentPage);
+        showToast('✅ JSON импортирован');
+      } catch(err) { showToast('❌ Ошибка: ' + err.message); }
+    };
+    reader.readAsText(file);
+
+  } else if (ext === 'csv') {
+    // ── CSV → договора ───────────────────────────────────
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const rows = e.target.result.split('\n').map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g,'')));
+        const headers = rows[0];
+        const imported = rows.slice(1).filter(r => r.length > 1 && r[0]).map(r => {
+          const obj = { id: 'csv_' + Date.now() + Math.random().toString(36).slice(2) };
+          headers.forEach((h, i) => { if (r[i] !== undefined) obj[h] = r[i]; });
+          return obj;
+        });
+        contracts = [...contracts, ...imported];
+        goPage(currentPage);
+        showToast(`✅ Импортировано ${imported.length} строк из CSV`);
+      } catch(err) { showToast('❌ Ошибка CSV: ' + err.message); }
+    };
+    reader.readAsText(file, 'utf-8');
+
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    // ── Excel → договора (SheetJS) ───────────────────────
+    if (!window.XLSX) {
+      // Динамически загрузим SheetJS если ещё не загружен
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => importExcel(file);
+      script.onerror = () => showToast('❌ Не удалось загрузить библиотеку Excel');
+      document.head.appendChild(script);
+    } else {
+      importExcel(file);
+    }
+  } else {
+    showToast('❌ Формат не поддерживается. Используйте .json, .xlsx или .csv');
+  }
+}
+
+function importExcel(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
-      if (data.contracts) contracts = data.contracts;
-      if (data.contractCosts) contractCosts = data.contractCosts;
-      if (data.contractFiles) contractFiles = data.contractFiles;
-      if (data.contractStatuses) contractStatuses = data.contractStatuses;
-      if (data.expenseCategories) expenseCategories = data.expenseCategories;
-      if (data.expenseRecords) expenseRecords = data.expenseRecords;
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      // Маппинг заголовков Excel → поля системы
+      const fieldMap = {
+        'наименование': 'org', 'организация': 'org', 'заказчик': 'org', 'name': 'org',
+        'фирма': 'firm', 'firm': 'firm', 'поставщик': 'firm',
+        'изделие': 'item', 'предмет': 'item', 'item': 'item', 'товар': 'item',
+        'количество': 'qty', 'кол-во': 'qty', 'qty': 'qty',
+        'цена': 'price', 'price': 'price', 'стоимость': 'price',
+        'себестоимость': 'cost_price', 'себест': 'cost_price',
+        'сумма': 'total', 'total': 'total', 'итого': 'total',
+        'регион': 'region', 'region': 'region',
+        'дата': 'signed_date', 'date': 'signed_date',
+        'срок': 'deadline', 'deadline': 'deadline',
+        '№ договора': 'contract_number', 'номер': 'contract_number',
+        'телефон': 'phone', 'phone': 'phone',
+        'код': 'code', 'code': 'code',
+        'комментарий': 'comment', 'comment': 'comment',
+      };
+
+      // Collect unknown headers → auto-add as custom columns
+      const allExcelHeaders = rows.length > 0 ? Object.keys(rows[0]) : [];
+      const unknownHeaders = allExcelHeaders.filter(h => !fieldMap[h.toLowerCase().trim()]);
+      const autoColIds = {};
+      unknownHeaders.forEach(h => {
+        const colId = 'xl_' + h.toLowerCase().replace(/[^a-zа-яё0-9]/gi, '_');
+        autoColIds[h] = colId;
+        // Add to column config if not already there
+        const cols = getColConfig();
+        if (!cols.find(c => c.id === colId)) {
+          const insertAt = cols.findIndex(c => c.id === 'actions');
+          cols.splice(insertAt >= 0 ? insertAt : cols.length, 0, { id: colId, l: h, w: 120, custom: true });
+          colConfig = cols;
+          lsw('kd_cols', cols);
+        }
+      });
+
+      const imported = rows.map(row => {
+        const obj = { id: 'xl_' + Date.now() + Math.random().toString(36).slice(2), payment_status: 'unpaid', is_visible: true };
+        Object.entries(row).forEach(([key, val]) => {
+          const mapped = fieldMap[key.toLowerCase().trim()];
+          if (mapped) {
+            obj[mapped] = String(val);
+          } else if (autoColIds[key]) {
+            // Save unknown columns to custom fields storage
+            if (!customFields[obj.id]) customFields[obj.id] = {};
+            customFields[obj.id][autoColIds[key]] = String(val);
+          }
+        });
+        return obj;
+      }).filter(r => r.org || r.item || r.firm);
+
+      if (imported.length === 0) {
+        showToast('⚠️ Не найдено строк. Проверьте заголовки колонок.');
+        return;
+      }
+      lsw('kd_custom_fields', customFields);
+      contracts = [...contracts, ...imported];
       goPage(currentPage);
-      alert('✅ Данные импортированы');
-    } catch(err) {
-      alert('❌ Ошибка импорта: ' + err.message);
-    }
+      const autoMsg = unknownHeaders.length > 0 ? ` + ${unknownHeaders.length} новых колонок` : '';
+      showToast(`✅ Импортировано ${imported.length} договоров из Excel${autoMsg}`);
+    } catch(err) { showToast('❌ Ошибка Excel: ' + err.message); }
   };
-  reader.readAsText(file);
-  event.target.value = '';
+  reader.readAsArrayBuffer(file);
 }
 
 // ===== COLUMN CONFIG (Feature 2) =====
@@ -798,7 +907,6 @@ function saveWorkshopAccess(btn) {
   showToast('Доступ обновлён');
 }
 
-// ===== NAVIGATION UPDATE =====
 function updateNavVisibility() {
   const tabs = document.getElementById('navtabs');
   if (!tabs) return;
@@ -820,10 +928,8 @@ function updateNavVisibility() {
   }
 }
 
-// ===== INIT =====
 initLogin();
 initNavTabs();
 applyZoom();
-// Migrate plain-text passwords to SHA-256 hashes
 migratePasswords();
 migrateCustomUsers();
