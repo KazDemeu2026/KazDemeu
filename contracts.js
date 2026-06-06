@@ -10,6 +10,8 @@ let contractComments = {};
 let hiddenContracts = new Set(ls('kd_hidden', []));
 // Per-row role visibility: {contractId: ['admin','manager',...]} — если пусто = виден всем
 let rowRoleVisibility = ls('kd_row_visibility', {});
+// Custom fields from Excel import: {contractId: {colId: value}}
+let customFields = ls('kd_custom_fields', {});
 
 // Warehouse & Workshop state
 let warehouseMaterials = ls('kd_warehouse_materials', []);
@@ -650,8 +652,41 @@ function onSearch(v) {
   });
 }
 
-function toggleExp(id) {
-  if (expandedRows.has(id)) expandedRows.delete(id);
-  else expandedRows.add(id);
-  renderTable();
+function toggleVisibility(id) {
+  if (currentRole !== 'admin') return;
+  const r = contracts.find(x => x.id === id);
+  if (!r) return;
+
+  const current = rowRoleVisibility[id] || [];
+  const allRoles = Object.entries(ROLES);
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#0d1a2e;border:1px solid rgba(0,212,255,0.3);border-radius:12px;padding:24px;width:360px;box-shadow:0 0 30px rgba(0,212,255,0.2)">
+      <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px">👁️ Видимость договора</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:16px">Выберите роли, которым виден этот договор.<br>Если никого не выбрать — виден всем.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+        ${allRoles.filter(([k])=>k!=='admin').map(([k,v])=>`
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border:1px solid rgba(0,212,255,0.15);border-radius:7px;background:rgba(0,212,255,0.03)">
+            <input type="checkbox" id="vrole-${k}" ${current.includes(k)?'checked':''} style="width:15px;height:15px;accent-color:#00d4ff">
+            <span style="font-size:13px">${v.i} ${v.l}</span>
+          </label>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveRowVisibility('${id}',this)" style="flex:1;padding:9px;background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.4);color:#00d4ff;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600">✓ Сохранить</button>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:9px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:7px;cursor:pointer;font-size:13px">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function saveRowVisibility(id, btn) {
+  const allRoleKeys = Object.keys(ROLES).filter(k => k !== 'admin');
+  const selected = allRoleKeys.filter(k => document.getElementById('vrole-'+k)?.checked);
+  rowRoleVisibility[id] = selected;
+  lsw('kd_row_visibility', rowRoleVisibility);
+  btn.closest('[style*=fixed]').remove();
+  renderContractsPage();
+  const label = selected.length === 0 ? 'всем' : selected.map(k=>ROLES[k].l).join(', ');
+  showToast(`Видимость: ${label}`);
 }
