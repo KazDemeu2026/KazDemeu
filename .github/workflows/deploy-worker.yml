@@ -22,7 +22,7 @@ jobs:
           npm install -g wrangler@2
 
       - name: Publish Worker
-        uses: cloudflare/wrangler-action@2
+        uses: cloudflare/wrangler-action@v2
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           workingDirectory: worker
