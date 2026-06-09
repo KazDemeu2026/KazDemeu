@@ -23,12 +23,12 @@
 - `worker/` — Cloudflare Worker API-прокси.
 
 ## Важно
-Этот проект пока находится только локально в папке `KazDemeu-secure`. Я не пушил изменения в ваш GitHub репозиторий — вам нужно будет добавить файлы в репо и запушить.
+Проект уже загружен в репозиторий `https://github.com/KazDemeu2026/KazDemeu`.
 
 ### Что нужно сделать дальше
 1. Настроить Cloudflare Worker и добавить секреты в Cloudflare.
 2. Заменить в `index.html`:
-   - `window.APP_CONFIG.apiBase = 'https://your-worker.example.workers.dev'`
+   - `window.APP_CONFIG.apiBase = 'https://<your-cloudflare-worker>.workers.dev'`
    - на URL вашего опубликованного воркера.
 3. Сформировать `AUTH_USERS` и добавить его в Cloudflare как переменную окружения.
 4. Если хотите автоматический деплой из GitHub, добавьте `CF_API_TOKEN` и другие секреты в GitHub Actions.
