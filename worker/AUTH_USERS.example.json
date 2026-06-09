@@ -1,0 +1,12 @@
+{
+  "admin": {
+    "passwordHash": "<replace-with-sha256-of-password>",
+    "role": "admin",
+    "name": "Admin"
+  },
+  "manager": {
+    "passwordHash": "<replace-with-sha256-of-password>",
+    "role": "manager",
+    "name": "Manager"
+  }
+}
