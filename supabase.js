@@ -1,210 +1,81 @@
-// === supabase.js ===
-// ===== SUPABASE CLIENT =====
-const SUPABASE_URL = 'https://cbdvpzryztoyowprjtro.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHZwenJ5enRveW93cHJqdHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMjUxNTIsImV4cCI6MjA5NTkwMTE1Mn0.hd8CMF_sPxsy35KeRPGfjtHFcJWp4kTrvw_gbHtmFn0';
+const API_BASE = window.APP_CONFIG?.apiBase || '';
 
-// Simple Supabase REST client
 const supabase = {
-  url: SUPABASE_URL,
-  key: SUPABASE_KEY,
+  async request(path, options = {}) {
+    const headers = Object.assign({}, options.headers || {});
+    if (!headers['Content-Type'] && options.body) {
+      headers['Content-Type'] = 'application/json; charset=utf-8';
+    }
+    const session = getSession();
+    if (session?.token) {
+      headers['Authorization'] = `Bearer ${session.token}`;
+    }
+    const response = await fetch(`${API_BASE}${path}`, Object.assign({ method: 'GET', headers }, options));
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error('Сервер вернул некорректный ответ');
+    }
+    if (!response.ok) {
+      if (response.status === 401) {
+        clearSession();
+      }
+      throw new Error(payload.error?.message || payload.message || 'Серверная ошибка');
+    }
+    return payload;
+  },
+
+  async login(login, password) {
+    return this.request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ login, password })
+    });
+  },
+
+  async me() {
+    return this.request('/api/auth/me', { method: 'GET' });
+  },
 
   async query(table, options = {}) {
-    let url = `${this.url}/rest/v1/${table}`;
-    const params = [];
-    
-    if (options.select) params.push(`select=${options.select}`);
+    const parts = [];
+    if (options.select) parts.push(`select=${encodeURIComponent(options.select)}`);
     if (options.filter) {
-      Object.entries(options.filter).forEach(([k, v]) => params.push(`${k}=eq.${v}`));
+      Object.entries(options.filter).forEach(([key, value]) => {
+        parts.push(`${encodeURIComponent(key)}=eq.${encodeURIComponent(value)}`);
+      });
     }
-    if (options.order) params.push(`order=${options.order}`);
-    if (options.limit) params.push(`limit=${options.limit}`);
-    
-    if (params.length) url += '?' + params.join('&');
-
-    const res = await fetch(url, {
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8',
-        'Prefer': 'return=representation'
-      }
-    });
-    
-    if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
-    return res.json();
+    if (options.order) parts.push(`order=${encodeURIComponent(options.order)}`);
+    if (options.limit) parts.push(`limit=${encodeURIComponent(options.limit)}`);
+    const query = parts.length ? `?${parts.join('&')}` : '';
+    return this.request(`/api/data/${encodeURIComponent(table)}${query}`, { method: 'GET' });
   },
 
   async insert(table, data) {
-    const res = await fetch(`${this.url}/rest/v1/${table}`, {
+    return this.request(`/api/data/${encodeURIComponent(table)}`, {
       method: 'POST',
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8',
-        'Prefer': 'return=representation'
-      },
       body: JSON.stringify(data)
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || 'Insert failed');
-    }
-    return res.json();
   },
 
   async update(table, id, data) {
-    const res = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
+    return this.request(`/api/data/${encodeURIComponent(table)}/${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8',
-        'Prefer': 'return=representation'
-      },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Update failed');
-    return res.json();
   },
 
   async delete(table, id) {
-    const res = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
-      method: 'DELETE',
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.key}`
-      }
+    return this.request(`/api/data/${encodeURIComponent(table)}/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Delete failed');
-    return true;
   },
 
   async upsert(table, data, onConflict = 'id') {
-    const res = await fetch(`${this.url}/rest/v1/${table}?on_conflict=${onConflict}`, {
+    return this.request(`/api/data/${encodeURIComponent(table)}?on_conflict=${encodeURIComponent(onConflict)}`, {
       method: 'POST',
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.key}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation,resolution=merge-duplicates'
-      },
+      headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Upsert failed');
-    return res.json();
-  },
-
-  // Realtime subscription via polling (simple approach)
-  subscribe(table, callback, interval = 5000) {
-    let lastCheck = new Date().toISOString();
-    return setInterval(async () => {
-      try {
-        const data = await this.query(table, {
-          filter: { 'updated_at': `gte.${lastCheck}` }
-        });
-        if (data.length > 0) {
-          lastCheck = new Date().toISOString();
-          callback(data);
-        }
-      } catch(e) {}
-    }, interval);
   }
 };
-
-// ===== LOCAL STORAGE HELPERS =====
-const ls = (k, d = null) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch { return d; } };
-const lsw = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-
-// ===== FORMAT HELPERS =====
-const fmtN = n => Math.round(n).toLocaleString('ru-RU') + '₸';
-const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU') : '—';
-
-// ===== CRYPTO: SHA-256 PASSWORD HASHING =====
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-// Hash all plain-text passwords in storage on first run (migration)
-async function migratePasswords() {
-  const stored = ls('kd_passwords', {});
-  const hashed = ls('kd_pw_hashed', false);
-  if (hashed) return; // already migrated
-  const out = {};
-  for (const [k, v] of Object.entries(stored)) {
-    // if not already a 64-char hex hash, hash it
-    out[k] = (v && /^[0-9a-f]{64}$/.test(v)) ? v : await sha256(v);
-  }
-  // Also hash defaults for any missing key
-  for (const [k, v] of Object.entries(DEFAULT_PASSWORDS)) {
-    if (!out[k]) out[k] = await sha256(v);
-  }
-  lsw('kd_passwords', out);
-  lsw('kd_pw_hashed', true);
-  ROLE_PASSWORDS = out;
-}
-
-// Hash custom users' passwords on migration
-async function migrateCustomUsers() {
-  const hashed = ls('kd_cu_hashed', false);
-  if (hashed) return;
-  const users = ls('kd_custom_users', []);
-  for (const u of users) {
-    if (u.password && !/^[0-9a-f]{64}$/.test(u.password)) {
-      u.password = await sha256(u.password);
-    }
-  }
-  lsw('kd_custom_users', users);
-  lsw('kd_cu_hashed', true);
-  customUsers = users;
-}
-
-// ===== LOGIN RATE LIMITING =====
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-function getRateData(key) {
-  return ls('kd_rate_' + key, { count: 0, lockedUntil: 0 });
-}
-function recordFailedAttempt(key) {
-  const d = getRateData(key);
-  d.count = (d.count || 0) + 1;
-  d.lockedUntil = d.count >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : (d.lockedUntil || 0);
-  lsw('kd_rate_' + key, d);
-  return d;
-}
-function clearRate(key) { lsw('kd_rate_' + key, { count: 0, lockedUntil: 0 }); }
-function isLocked(key) {
-  const d = getRateData(key);
-  if (d.lockedUntil && Date.now() < d.lockedUntil) return Math.ceil((d.lockedUntil - Date.now()) / 60000);
-  return 0;
-}
-
-// ===== SESSION TOKEN =====
-const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
-function createSession(role, name) {
-  const token = { role, name, ts: Date.now(), exp: Date.now() + SESSION_TTL };
-  lsw('kd_session', token);
-  return token;
-}
-function getSession() {
-  const s = ls('kd_session', null);
-  if (!s || Date.now() > s.exp) { lsw('kd_session', null); return null; }
-  return s;
-}
-function clearSession() { lsw('kd_session', null); }
-
-// ===== XSS PROTECTION =====
-const esc = s => s == null ? '' : String(s)
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#39;');
-const escOr = (s, fallback='—') => s ? esc(s) : fallback;
