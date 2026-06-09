@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>аземеу — Система управления договорами</title>
+<title>КазДемеу — Система управления договорами</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script>
 window.APP_CONFIG = {
-  apiBase: 'https://kazdemeu-worker.aliaskhat96.workers.dev'
+  apiBase: 'https://kazdemeu-worker.aliaskhat96.workers.dev' // реальный URL опубликованного Cloudflare Worker
 };
 </script>
 </head>
@@ -19,18 +19,18 @@ window.APP_CONFIG = {
   <div class="lcard">
     <div class="llogo">
       <div class="li">🏭</div>
-      <h1>аземеу</h1>
+      <h1>КазДемеу</h1>
       <p>Система управления договорами</p>
     </div>
     <div class="rlist" id="rlist"></div>
-    <button class="lbtn" id="lbtn" onclick="doLogin()" disabled>ойти</button>
+    <button class="lbtn" id="lbtn" onclick="doLogin()" disabled>Войти</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="t-logo">🏭 аземеу</div>
+    <div class="t-logo">🏭 КазДемеу</div>
     <div class="t-badge" id="tbadge"></div>
     <div class="t-right">
       <div class="zc">
@@ -39,11 +39,11 @@ window.APP_CONFIG = {
         <button class="zb" onclick="zoom(1)">+</button>
         <button class="zb" onclick="zoom(0)">↺</button>
       </div>
-      <button class="tb" onclick="exportData()">💾 кспорт</button>
-      <label class="tb"><input type="file" accept=".json,.xlsx,.xls,.csv" onchange="importData(event)" style="display:none">📂 мпорт</label>
+      <button class="tb" onclick="exportData()">💾 Экспорт</button>
+      <label class="tb"><input type="file" accept=".json,.xlsx,.xls,.csv" onchange="importData(event)" style="display:none">📂 Импорт</label>
       <span id="sbStatus" style="font-size:11px;color:#94a3b8">⏳</span>
       <button class="tb purple" onclick="toggleGrok()">🤖 Grok AI</button>
-      <button class="tb yellow" onclick="doLogout()">ыйти</button>
+      <button class="tb yellow" onclick="doLogout()">Выйти</button>
     </div>
   </div>
   <div id="app-inner" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
@@ -59,19 +59,19 @@ window.APP_CONFIG = {
     <button class="grok-close" onclick="toggleGrok()">✕</button>
   </div>
   <div class="grok-messages" id="grokMessages">
-    <div class="grok-msg ai">ривет! Я готов анализировать ваши договоры.</div>
+    <div class="grok-msg ai">Привет! Я готов анализировать ваши договоры.</div>
   </div>
   <div class="grok-input-area">
     <div class="grok-quick">
-      <button onclick="grokAsk('Сколько договоров и общая сумма?')">📊 тоги</button>
-      <button onclick="grokAsk('акие договора не оплачены?')">❌ ебиторка</button>
+      <button onclick="grokAsk('Сколько договоров и общая сумма?')">📊 Итоги</button>
+      <button onclick="grokAsk('Какие договора не оплачены?')">❌ Дебиторка</button>
       <button onclick="grokAsk('Топ 5 дорогих договоров')">💰 Топ</button>
-      <button onclick="grokAsk('роанализируй финансы')">📈 нализ</button>
-      <button onclick="grokAsk('акие риски есть?')">⚠️ иски</button>
+      <button onclick="grokAsk('Проанализируй финансы')">📈 Анализ</button>
+      <button onclick="grokAsk('Какие риски есть?')">⚠️ Риски</button>
     </div>
     <div class="grok-input-row">
       <input type="text" class="grok-input" id="grokInput" placeholder="Спросите Grok..." onkeydown="if(event.key==='Enter')grokSend()">
-      <button class="grok-send" id="grokSendBtn" onclick="grokSend()">тправить</button>
+      <button class="grok-send" id="grokSendBtn" onclick="grokSend()">Отправить</button>
     </div>
   </div>
 </div>
