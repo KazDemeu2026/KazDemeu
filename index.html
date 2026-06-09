@@ -6,6 +6,11 @@
 <title>КазДемеу — Система управления договорами</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script>
+window.APP_CONFIG = {
+  apiBase: 'https://your-worker.example.workers.dev'
+};
+</script>
 </head>
 <body>
 
@@ -34,16 +39,15 @@
         <button class="zb" onclick="zoom(1)">+</button>
         <button class="zb" onclick="zoom(0)">↺</button>
       </div>
-      <button class="exp-btn" onclick="exportData()">💾 Экспорт</button>
-      <label class="exp-btn"><input type="file" accept=".json,.xlsx,.xls,.csv" onchange="importData(event)" style="display:none">📂 Импорт</label>
+      <button class="tb" onclick="exportData()">💾 Экспорт</button>
+      <label class="tb"><input type="file" accept=".json,.xlsx,.xls,.csv" onchange="importData(event)" style="display:none">📂 Импорт</label>
       <span id="sbStatus" style="font-size:11px;color:#94a3b8">⏳</span>
       <button class="tb purple" onclick="toggleGrok()">🤖 Grok AI</button>
-      <button class="tb yellow" id="btnPassSettings" style="display:none" onclick="openPasswordSettings()">🔑 Пароли</button>
-      <button class="tb" onclick="doLogout()">Выйти</button>
+      <button class="tb yellow" onclick="doLogout()">Выйти</button>
     </div>
   </div>
   <div id="app-inner" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
-    <div class="navtabs" id="navtabs" style="display:none"></div>
+    <div class="navtabs" id="navtabs"></div>
     <div class="main" id="main"></div>
   </div>
 </div>
@@ -55,7 +59,7 @@
     <button class="grok-close" onclick="toggleGrok()">✕</button>
   </div>
   <div class="grok-messages" id="grokMessages">
-    <div class="grok-msg ai">Привет! Я знаю все ваши договора и расходы. Спросите меня!</div>
+    <div class="grok-msg ai">Привет! Я готов анализировать ваши договоры.</div>
   </div>
   <div class="grok-input-area">
     <div class="grok-quick">
@@ -72,20 +76,16 @@
   </div>
 </div>
 
-<!-- SCROLL NAV -->
-<div class="snav" id="snav" style="display:none">
-  <button onclick="scrollTbl(-300)">▲</button>
-  <button onclick="scrollTbl(300)">▼</button>
-</div>
+<!-- TOAST -->
+<div id="toastContainer"></div>
 
-<!-- SCRIPTS -->
-
+<script src="utils.js"></script>
 <script src="supabase.js"></script>
 <script src="auth.js"></script>
 <script src="contracts.js"></script>
 <script src="analytics.js"></script>
 <script src="expenses.js"></script>
 <script src="grok.js"></script>
-<script src="main.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
