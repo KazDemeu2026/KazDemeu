@@ -21,14 +21,4 @@ jobs:
         run: |
           npm install -g wrangler@2
 
-      - name: Publish Worker
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          workingDirectory: worker
-          environment: production
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          API_SECRET: ${{ secrets.API_SECRET }}
-          AUTH_USERS: ${{ secrets.AUTH_USERS }}
+      - name: Publish Worker`n        run: |`n          wrangler publish --env production`n        working-directory: worker`n        env:`n          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }} `n          SUPABASE_URL: ${{ secrets.SUPABASE_URL }} `n          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} `n          API_SECRET: ${{ secrets.API_SECRET }} `n          AUTH_USERS: ${{ secrets.AUTH_USERS }}`n
