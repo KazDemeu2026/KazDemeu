@@ -19,10 +19,15 @@ jobs:
       - name: Publish Worker
         run: |
           npm install -g wrangler@2
+          printf '%s' "$AUTH_USERS" | npx wrangler secret put AUTH_USERS --env production
+          printf '%s' "$API_SECRET" | npx wrangler secret put API_SECRET --env production
+          printf '%s' "$SUPABASE_URL" | npx wrangler secret put SUPABASE_URL --env production
+          printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY --env production
           npx wrangler publish --env production
         working-directory: worker
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
