@@ -1,0 +1,13 @@
+# Node and tooling
+node_modules/
+.npm/
+package-lock.json
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+*.code-workspace
