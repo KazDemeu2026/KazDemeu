@@ -111,3 +111,5 @@ window.getSession = getSession;
 window.setSession = setSession;
 window.clearSession = clearSession;
 window.normalizeString = normalizeString;
+function hideLoading() { clearLoading(); }
+window.hideLoading = hideLoading;
