@@ -1,80 +1,130 @@
 // === grok.js ===
-// ===== GROK AI =====
-// Ключ xAI хранится в Cloudflare Worker (GROK_KEY secret).
-// URL берётся из window.APP_CONFIG.apiBase (установлен в index.html).
+// ===== ИИ АССИСТЕНТ КазДемеу (офлайн, без внешних API) =====
 
-let grokHistory = [];
+let aiHistory = [];
 
 function toggleGrok() {
   document.getElementById('grokPanel').classList.toggle('open');
 }
 
-function getDataContext() {
-  const paid = contracts.filter(r => r.payment_status === 'paid');
-  const tot = contracts.reduce((s, r) => s + Number(r.total || 0), 0);
+function getContractsContext() {
+  const all = (typeof contracts !== 'undefined' ? contracts : []);
+  const paid = all.filter(r => r.payment_status === 'paid');
+  const unpaid = all.filter(r => r.payment_status !== 'paid');
+  const totalSum = all.reduce((s, r) => s + Number(r.total || 0), 0);
   const paidSum = paid.reduce((s, r) => s + Number(r.total || 0), 0);
-  const costsTotal = contracts.reduce((s, r) => s + (contractCosts[r.id] || []).reduce((ss, c) => ss + Number(c.amount), 0), 0);
-
-  return 'Данные КазДемеу:\n' +
-    'Договоров: ' + contracts.length + '\n' +
-    'Оплачено: ' + paid.length + ' (' + fmtN(paidSum) + ')\n' +
-    'Общая сумма: ' + fmtN(tot) + '\n' +
-    'Затраты: ' + fmtN(costsTotal) + '\n' +
-    'Договора: ' + contracts.slice(0, 20).map(r =>
-      esc(r.org) + '|' + esc(r.item) + '|' + fmtN(r.total) + '|' + (r.payment_status === 'paid' ? 'оплачен' : 'не оплачен')
-    ).join('; ');
+  const debitorSum = totalSum - paidSum;
+  const allCosts = typeof contractCosts !== 'undefined' ? contractCosts : {};
+  const costsTotal = all.reduce((s, r) => {
+    return s + (allCosts[r.id] || []).reduce((ss, c) => ss + Number(c.amount || 0), 0);
+  }, 0);
+  const byFirm = {};
+  all.forEach(r => { byFirm[r.firm || 'Не указана'] = (byFirm[r.firm || 'Не указана'] || 0) + Number(r.total || 0); });
+  return { all, paid, unpaid, totalSum, paidSum, debitorSum, costsTotal, byFirm };
 }
 
-async function grokSend() {
-  const inp = document.getElementById('grokInput');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  inp.value = '';
-  await grokAsk(msg);
-}
+function aiAnalyze(question) {
+  const q = question.toLowerCase().trim();
+  const ctx = getContractsContext();
+  const { all, paid, unpaid, totalSum, paidSum, debitorSum, costsTotal, byFirm } = ctx;
 
-async function grokAsk(msg) {
-  const msgs = document.getElementById('grokMessages');
-  const btn = document.getElementById('grokSendBtn');
+  if (!all.length) return 'Договоров пока нет в системе.';
 
-  msgs.innerHTML += '<div class="grok-msg user">' + esc(msg) + '</div>';
-  msgs.scrollTop = msgs.scrollHeight;
-
-  btn.disabled = true;
-  btn.textContent = '...';
-
-  grokHistory.push({ role: 'user', content: msg });
-
-  const systemPrompt = 'Ты AI-ассистент системы КазДемеу — управление договорами. Отвечай кратко и по делу на русском языке.\n\n' + getDataContext();
-
-  try {
-    const apiBase = (window.APP_CONFIG && window.APP_CONFIG.apiBase) ? window.APP_CONFIG.apiBase : '';
-    const session = getSession ? getSession() : null;
-    const headers = { 'Content-Type': 'application/json' };
-    if (session && session.token) headers['Authorization'] = 'Bearer ' + session.token;
-
-    const res = await fetch(apiBase + '/api/grok', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        model: 'grok-3-mini',
-        messages: [{ role: 'system', content: systemPrompt }].concat(grokHistory.slice(-10)),
-        max_tokens: 500,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error((data.error && (data.error.message || data.error)) || ('API error: ' + res.status));
-
-    const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || 'Нет ответа';
-    grokHistory.push({ role: 'assistant', content: reply });
-    msgs.innerHTML += '<div class="grok-msg ai">' + esc(reply).replace(/\n/g, '<br>') + '</div>';
-    msgs.scrollTop = msgs.scrollHeight;
-  } catch (e) {
-    msgs.innerHTML += '<div class="grok-msg ai" style="color:#ff4757">Ошибка: ' + esc(e.message) + '</div>';
-    msgs.scrollTop = msgs.scrollHeight;
+  if (/итог|сколько|всего|общ|сумм/.test(q)) {
+    let ans = 'Итоги по договорам:\n\n';
+    ans += 'Всего: ' + all.length + ' договоров\n';
+    ans += 'Сумма: ' + fmtN(totalSum) + '\n';
+    ans += 'Оплачено: ' + paid.length + ' — ' + fmtN(paidSum) + '\n';
+    ans += 'Дебиторка: ' + fmtN(debitorSum);
+    if (costsTotal > 0) ans += '\nЗатраты: ' + fmtN(costsTotal) + '\nПрибыль: ' + fmtN(totalSum - costsTotal);
+    return ans;
   }
 
-  btn.disabled = false;
-  btn.textContent = 'Отправить';
+  if (/неопла|дебитор|долг/.test(q)) {
+    if (!unpaid.length) return 'Все договора оплачены!';
+    let ans = 'Неоплаченные (' + unpaid.length + ' шт.):\n\n';
+    unpaid.slice(0, 10).forEach((r, i) => { ans += (i+1) + '. ' + (r.org || '—') + ' — ' + fmtN(r.total) + '\n'; });
+    ans += '\nИтого: ' + fmtN(debitorSum);
+    return ans;
+  }
+
+  if (/топ|дорог|крупн|большой/.test(q)) {
+    const top = [...all].sort((a,b) => Number(b.total||0) - Number(a.total||0)).slice(0,5);
+    let ans = 'Топ-5 по сумме:\n\n';
+    top.forEach((r, i) => { ans += (i+1) + '. ' + (r.org || '—') + ' — ' + fmtN(r.total) + '\n'; });
+    return ans;
+  }
+
+  if (/финанс|анализ|прибыл|рентабел|маржа/.test(q)) {
+    const margin = totalSum > 0 ? ((totalSum - costsTotal) / totalSum * 100).toFixed(1) : 0;
+    const payRate = all.length > 0 ? (paid.length / all.length * 100).toFixed(0) : 0;
+    let ans = 'Финансовый анализ:\n\n';
+    ans += 'Портфель: ' + all.length + ' договоров\n';
+    ans += 'Объём: ' + fmtN(totalSum) + '\n';
+    ans += 'Оплата: ' + payRate + '%\n';
+    if (costsTotal > 0) ans += 'Затраты: ' + fmtN(costsTotal) + '\nМаржа: ' + margin + '%';
+    return ans;
+  }
+
+  if (/риск|проблем|критич/.test(q)) {
+    const risks = [];
+    const dPct = totalSum > 0 ? (debitorSum / totalSum * 100) : 0;
+    if (dPct > 40) risks.push('Критическая дебиторка: ' + dPct.toFixed(0) + '% (' + fmtN(debitorSum) + ')');
+    else if (dPct > 20) risks.push('Высокая дебиторка: ' + dPct.toFixed(0) + '% (' + fmtN(debitorSum) + ')');
+    if (costsTotal > totalSum * 0.85) risks.push('Затраты >85% — риск убытков');
+    const noOrg = all.filter(r => !r.org);
+    if (noOrg.length) risks.push(noOrg.length + ' договоров без организации');
+    if (!risks.length) return 'Критических рисков не обнаружено.';
+    return 'Выявленные риски:\n\n' + risks.join('\n');
+  }
+
+  if (/статус|этап|выполн/.test(q)) {
+    const sts = typeof contractStatuses !== 'undefined' ? contractStatuses : {};
+    const st = { start: 0, plan: 0, finish: 0, none: 0 };
+    all.forEach(r => {
+      const v = Object.values(sts[r.id] || {}).find(s => s) || '';
+      if (v === 'start') st.start++;
+      else if (v === 'plan') st.plan++;
+      else if (v === 'finish') st.finish++;
+      else st.none++;
+    });
+    return 'Статусы:\n\nСтарт: ' + st.start + '\nВ плане: ' + st.plan + '\nФиниш: ' + st.finish + '\nБез статуса: ' + st.none;
+  }
+
+  if (/оплачен/.test(q)) {
+    let ans = 'Оплаченные (' + paid.length + ' — ' + fmtN(paidSum) + '):\n\n';
+    paid.slice(0,8).forEach((r,i) => { ans += (i+1) + '. ' + (r.org||'—') + ' — ' + fmtN(r.total) + '\n'; });
+    return ans;
+  }
+
+  return 'ИИ-Ассистент КазДемеу. Спросите:\n\n"Итоги" — статистика\n"Дебиторка" — неоплаченные\n"Топ" — крупные договора\n"Анализ" — финансы\n"Риски" — проблемы\n"Статусы" — этапы';
 }
+
+function grokSend() {
+  const inp = document.getElementById('grokInput');
+  const msg = (inp?.value || '').trim();
+  if (!msg) return;
+  inp.value = '';
+  grokAsk(msg);
+}
+
+function grokAsk(msg) {
+  const msgs = document.getElementById('grokMessages');
+  const btn = document.getElementById('grokSendBtn');
+  if (!msgs) return;
+  msgs.innerHTML += '<div class="grok-msg user">' + esc(msg) + '</div>';
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = true;
+  btn.textContent = '...';
+  setTimeout(() => {
+    try {
+      const reply = aiAnalyze(msg).replace(/\n/g, '<br>');
+      msgs.innerHTML += '<div class="grok-msg ai">' + reply + '</div>';
+    } catch(e) {
+      msgs.innerHTML += '<div class="grok-msg ai" style="color:#ff4757">Ошибка: ' + e.message + '</div>';
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    btn.disabled = false;
+    btn.textContent = 'Отправить';
+  }, 120);
+                                }
