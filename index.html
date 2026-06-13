@@ -42,7 +42,7 @@ window.APP_CONFIG = {
       <button class="exp-btn" onclick="exportData()">💾 Экспорт</button>
       <label class="exp-btn"><input type="file" accept=".json,.xlsx,.xls,.csv" onchange="importData(event)" style="display:none">📂 Импорт</label>
       <span id="sbStatus" style="font-size:11px;color:#94a3b8"></span>
-      <button class="tb purple" onclick="toggleGrok()">🤖 Grok AI</button>
+      <button class="tb purple" onclick="toggleGrok()">🤖 Claude AI</button>
       <button class="tb yellow" id="btnPassSettings" style="display:none" onclick="openPasswordSettings()">🔑 Пароли</button>
       <button class="tb" onclick="doLogout()">Выйти</button>
     </div>
@@ -56,7 +56,7 @@ window.APP_CONFIG = {
 <!-- GROK PANEL -->
 <div id="grokPanel">
   <div class="grok-header">
-    <div class="grok-title">🤖 Grok AI <span style="font-size:11px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);padding:2px 8px;border-radius:999px;font-weight:400;color:var(--accent2)">онлайн</span></div>
+    <div class="grok-title">🤖 Claude AI <span style="font-size:11px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);padding:2px 8px;border-radius:999px;font-weight:400;color:var(--accent2)">онлайн</span></div>
     <button class="grok-close" onclick="toggleGrok()">✕</button>
   </div>
   <div class="grok-messages" id="grokMessages">
@@ -92,4 +92,4 @@ window.APP_CONFIG = {
 <script src="grok.js"></script>
 <script src="app.js"></script>
 </body>
-</html>
+</ht

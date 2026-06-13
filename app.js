@@ -202,8 +202,7 @@ function importExcel(file) {
 }
 
 // ===== WAREHOUSE PAGE =====
-let warehouseMaterials = storageGet('kd_warehouse_materials', []);
-let warehouseGoods     = storageGet('kd_warehouse_goods', []);
+// warehouseMaterials, warehouseGoods объявлены в contracts.js
 
 function renderWarehousePage(m) {
   if (!m) m = document.getElementById('main');
@@ -330,8 +329,8 @@ function saveWarehouseAccess(btn) {
 }
 
 // ===== WORKSHOP PAGE =====
+// workshopItems объявлен в contracts.js
 const WORKSHOP_STAGES = ['Раскрой','Пошив','ОТК','Упаковка','Готово'];
-let workshopItems = storageGet('kd_workshop_items', []);
 
 function renderWorkshopPage(m) {
   if (!m) m = document.getElementById('main');
@@ -473,3 +472,4 @@ async function initApp() {
 }
 
 window.addEventListener('DOMContentLoaded', initApp);
+                                                                
