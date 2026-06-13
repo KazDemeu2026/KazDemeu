@@ -656,6 +656,7 @@ function onSearch(v) {
 const DEFAULT_COLS = [
   {id:'num',    l:'№',           w:40,  locked:true},
   {id:'drag',   l:'',            w:24,  locked:true},
+  {id:'actions',l:'',            w:60,  locked:true},
   {id:'name',   l:'Наименование',w:180, locked:true},
   {id:'firm',   l:'Фирма',       w:130},
   {id:'region', l:'Регион',      w:100},
@@ -667,8 +668,7 @@ const DEFAULT_COLS = [
   {id:'cost_price', l:'Себестоимость', w:110},
   {id:'paid',       l:'Оплата',        w:70},
   {id:'comments',l:'Комментарии', w:180},
-  {id:'status', l:'Статус',      w:110},
-  {id:'actions',l:'',            w:60,  locked:true}
+  {id:'status', l:'Статус',      w:110}
 ];
 
 let colConfig = ls('kd_cols', null);
