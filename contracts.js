@@ -438,6 +438,53 @@ function showAllComments(contractId) {
   document.body.appendChild(overlay);
 }
 
+// ===== INLINE COST_PRICE EDIT =====
+function costPriceCellHtml(r) {
+  const val = r.cost_price;
+  const canEdit = canCostPrice();
+  let h = '<div style="min-width:100px">';
+  if (val !== null && val !== undefined && val !== '') {
+    h += '<div style="font-weight:600;color:#c4b5fd;font-size:13px">' + fmtN(val) + '</div>';
+    if (val && r.total) {
+      const margin = Math.round((Number(r.total) - Number(val)) / Number(r.total) * 100);
+      h += '<div style="font-size:10px;color:' + (margin>=0?'#00ff88':'#ff4757') + ';margin-top:2px">' + (margin>=0?'+':'') + margin + '% марж.</div>';
+    }
+  } else {
+    h += '<div style="font-size:10px;color:#64748b">Не указана</div>';
+  }
+  if (canEdit) {
+    h += '<button onclick="openCostPriceForm(\'' + r.id + '\',this)" style="margin-top:4px;padding:2px 8px;background:rgba(124,58,237,0.08);border:1px dashed rgba(124,58,237,0.4);border-radius:5px;color:#c4b5fd;font-size:10px;cursor:pointer">' + (val ? '✏️ Изменить' : '+ Добавить') + '</button>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function openCostPriceForm(contractId, btn) {
+  const existing = document.getElementById('cpform-' + contractId);
+  if (existing) { existing.remove(); return; }
+  const r = contracts.find(x => x.id === contractId);
+  const cur = r?.cost_price || '';
+  const div = document.createElement('div');
+  div.id = 'cpform-' + contractId;
+  div.style.cssText = 'margin-top:5px';
+  div.innerHTML = '<input id="cptxt-' + contractId + '" type="number" value="' + cur + '" placeholder="Себестоимость..." style="width:100%;padding:5px 8px;background:#0a1628;border:1px solid rgba(124,58,237,0.4);border-radius:6px;color:#e2e8f0;font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')saveCostPrice(\'' + contractId + '\')"><div style="display:flex;gap:5px;margin-top:4px"><button onclick="saveCostPrice(\'' + contractId + '\')" style="padding:4px 12px;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.4);border-radius:5px;color:#c4b5fd;font-size:11px;cursor:pointer;font-weight:600">✓ Сохранить</button><button onclick="document.getElementById(\'cpform-' + contractId + '\').remove()" style="padding:4px 8px;background:transparent;border:1px solid rgba(100,116,139,0.3);border-radius:5px;color:#64748b;font-size:11px;cursor:pointer">✕</button></div>';
+  btn.parentNode.insertBefore(div, btn.nextSibling);
+  document.getElementById('cptxt-' + contractId)?.focus();
+}
+
+async function saveCostPrice(contractId) {
+  const inp = document.getElementById('cptxt-' + contractId);
+  const val = parseFloat(inp?.value) || null;
+  try {
+    await supabase.update('contracts', contractId, { cost_price: val });
+    const idx = contracts.findIndex(x => x.id === contractId);
+    if (idx >= 0) contracts[idx].cost_price = val;
+    document.getElementById('cpform-' + contractId)?.remove();
+    const cell = document.querySelector('[data-cpcell="' + contractId + '"]');
+    if (cell) cell.innerHTML = costPriceCellHtml(contracts[idx]);
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
 // ===== CONTRACT CRUD =====
 const FORM_FIELDS = [
   { id: 'nf-code', l: 'Номер закупки', ph: '16999999-1' },
@@ -941,6 +988,8 @@ function buildTable(rows, isAdmin, canAdd, canDel, canSeePrice) {
         h += `<td class="td" onclick="${isAdmin ? `togglePay('${r.id}')` : ''}" style="${isAdmin ? 'cursor:pointer' : ''}">
           <span class="bdg ${isPaid ? 'bg' : 'br'}">${isPaid ? '✅ Оплачен' : '❌ Не опл.'}</span>
         </td>`;
+      } else if (c.id === 'cost_price') {
+        h += `<td class="td" style="vertical-align:top;min-width:100px"><div data-cpcell="${r.id}">${costPriceCellHtml(r)}</div></td>`;
       } else if (c.id === 'comments') {
         h += `<td class="td" style="vertical-align:top;min-width:160px"><div data-cmtcell="${r.id}">${commentCellHtml(r.id)}</div></td>`;
       } else if (c.id === 'status') {
