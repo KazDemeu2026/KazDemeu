@@ -698,5 +698,298 @@ function openColSettings() {
         <div draggable="true" ondragstart="colDragStart(event,${i})" ondragover="colDragOver(event,${i})" ondrop="colDrop(event,${i})"
           style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(7,15,29,0.6);border:1px solid rgba(0,212,255,0.1);border-radius:7px;margin-bottom:5px;cursor:grab">
           <span style="color:#64748b;font-size:14px;cursor:grab">⠿</span>
-          ${col.locked ? `<span style="flex:1;color:#e2e8f0;font-size:13px">${esc(col.l) || '(системная)'}</span>` :
-            `<input type="text" value="${esc(col.
+          ${col.locked ? `<span style="flex:1;color:#e2e8f0;font-size:13px">${esc(col.l) || '(системная)'}</span>` : `<input type="text" value="${esc(col.l)}" onchange="updateColLabel(${i},this.value)" style="flex:1;padding:5px 8px;background:#0a1628;border:1px solid rgba(0,212,255,0.2);border-radius:5px;color:#e2e8f0;font-size:12px;outline:none">`}
+          <span style="font-size:10px;color:#64748b;min-width:50px">w:${col.w||'auto'}</span>
+          ${col.locked ? `<span style="width:24px"></span>` : `<button onclick="deleteCol(${i})" style="padding:3px 7px;background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.3);border-radius:4px;color:#ff4757;font-size:11px;cursor:pointer">✕</button>`}
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="newColName" type="text" placeholder="Название новой колонки" style="flex:1;padding:7px 9px;background:#0a1628;border:1px solid rgba(0,212,255,0.25);border-radius:6px;color:#e2e8f0;font-size:12px;outline:none">
+      <button onclick="addNewCol()" style="padding:7px 14px;background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:#00d4ff;font-size:12px;cursor:pointer;font-weight:600">+ Добавить</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="applyColConfig()" style="padding:8px 18px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.3);border-radius:7px;color:#00ff88;font-size:13px;cursor:pointer;font-weight:600">✓ Применить</button>
+      <button onclick="resetColConfig()" style="padding:8px 14px;background:transparent;border:1px solid rgba(255,165,2,0.3);border-radius:7px;color:#ffa502;font-size:12px;cursor:pointer">↺ Сбросить</button>
+    </div>
+  </div>`;
+  window._colDragSrc = null;
+}
+
+let _colDragSrc = null;
+function colDragStart(e, i) { _colDragSrc = i; e.dataTransfer.effectAllowed = 'move'; }
+function colDragOver(e, i) { e.preventDefault(); }
+function colDrop(e, i) {
+  e.preventDefault();
+  if (_colDragSrc === null || _colDragSrc === i) return;
+  const cols = getColConfig();
+  const [moved] = cols.splice(_colDragSrc, 1);
+  cols.splice(i, 0, moved);
+  colConfig = cols;
+  _colDragSrc = null;
+  openColSettings();
+}
+function updateColLabel(i, val) {
+  const cols = getColConfig();
+  if (cols[i]) cols[i].l = val;
+  colConfig = cols;
+}
+function deleteCol(i) {
+  const cols = getColConfig();
+  if (cols[i] && !cols[i].locked) { cols.splice(i, 1); colConfig = cols; openColSettings(); }
+}
+function addNewCol() {
+  const name = (document.getElementById('newColName')?.value || '').trim();
+  if (!name) return;
+  const cols = getColConfig();
+  const newId = 'custom_' + Date.now();
+  const actIdx = cols.findIndex(c => c.id === 'actions');
+  const insertAt = actIdx >= 0 ? actIdx : cols.length;
+  cols.splice(insertAt, 0, { id: newId, l: name, w: 120, custom: true });
+  colConfig = cols;
+  openColSettings();
+}
+function applyColConfig() {
+  const cols = getColConfig();
+  lsw('kd_cols', cols);
+  document.getElementById('colMgmtOverlay')?.remove();
+  renderContractsPage();
+  showToast('Конфигурация колонок сохранена');
+}
+function resetColConfig() {
+  colConfig = null;
+  lsw('kd_cols', null);
+  document.getElementById('colMgmtOverlay')?.remove();
+  renderContractsPage();
+  showToast('Колонки сброшены');
+}
+
+// ===== CONTRACTS PAGE =====
+function renderContractsPage(m) {
+  if (!m) m = document.getElementById('main');
+  if (!m) return;
+  m.style.cssText = 'display:flex;flex-direction:column;height:100%;overflow:hidden;min-height:0';
+
+  const rows = filtered();
+  const totalSum = rows.reduce((s, r) => s + Number(r.total || 0), 0);
+  const paidCount = rows.filter(r => r.payment_status === 'paid').length;
+  const paidSum = rows.filter(r => r.payment_status === 'paid').reduce((s, r) => s + Number(r.total || 0), 0);
+  const firmList = firms();
+
+  const isAdmin = currentRole === 'admin';
+  const isGoszakup = currentRole === 'goszakup';
+  const canAdd = isAdmin || isGoszakup;
+  const canDel = isAdmin || isGoszakup;
+  const canSeePrice = canPrice();
+
+  let html = '';
+
+  html += `<div class="stats">
+    <div class="sc"><div class="sl">Договоров</div><div class="sv">${rows.length}</div></div>
+    ${canSeePrice ? `
+    <div class="sc"><div class="sl">Общая сумма</div><div class="sv" style="font-size:13px">${fmtN(totalSum)}</div></div>
+    <div class="sc"><div class="sl">Оплачено</div><div class="sv" style="color:#00ff88;font-size:13px">${fmtN(paidSum)}</div><div class="ss">${paidCount} дог.</div></div>
+    <div class="sc"><div class="sl">Дебиторка</div><div class="sv" style="color:#ffa502;font-size:13px">${fmtN(totalSum - paidSum)}</div></div>
+    ` : ''}
+  </div>`;
+
+  if (showForm) {
+    html += formHtml(editId !== null);
+  }
+
+  html += `<div class="toolbar">
+    <div class="sbox">
+      <span class="si">🔍</span>
+      <input id="sinp" type="text" placeholder="Поиск по организации, предмету, номеру..." value="${searchQ}" oninput="onSearch(this.value)">
+    </div>
+    <select class="fsel" onchange="filterFirm=this.value;renderContractsPage()">
+      <option value="">Все фирмы</option>
+      ${firmList.map(f => `<option value="${f}"${filterFirm === f ? ' selected' : ''}>${f}</option>`).join('')}
+    </select>
+    ${canAdd ? `<button class="btn btn-p" onclick="startAdd()">+ Добавить</button>` : ''}
+    ${isAdmin ? `<button class="btn btn-g" onclick="renderContractsPage()">🔄 Обновить</button>` : ''}
+    ${isAdmin ? `<button class="btn btn-g" onclick="openColSettings()">⚙️ Колонки</button>` : ''}
+  </div>`;
+
+  html += `<div class="twrap">
+    <div class="thead-bar">
+      <span class="th-title">Договора</span>
+      <span class="cnt">${rows.length}</span>
+    </div>
+    <div class="tscroll" id="tscroll">`;
+
+  html += buildTable(rows, isAdmin, canAdd, canDel, canSeePrice);
+
+  html += `</div></div>`;
+
+  m.innerHTML = html;
+  initResizers();
+}
+
+function renderTable() {
+  const sc = document.getElementById('tscroll');
+  if (!sc) { renderContractsPage(); return; }
+  const rows = filtered();
+  const isAdmin = currentRole === 'admin';
+  const canAdd = isAdmin || currentRole === 'goszakup';
+  const canDel = isAdmin || currentRole === 'goszakup';
+  sc.innerHTML = buildTable(rows, isAdmin, canAdd, canDel, canPrice());
+  initResizers();
+  const cnt = document.querySelector('.cnt');
+  if (cnt) cnt.textContent = rows.length;
+}
+
+function buildTable(rows, isAdmin, canAdd, canDel, canSeePrice) {
+  const roleKey = myRoleKey();
+  let cols;
+  if (isAdmin) {
+    cols = getColConfig().map(c => ({ ...c }));
+    if (!canSeePrice) cols = cols.filter(c => c.id !== 'price' && c.id !== 'total' && c.id !== 'paid');
+  } else {
+    cols = [];
+    cols.push({ id: 'drag', l: '' });
+    cols.push({ id: 'num', l: '#' });
+    cols.push({ id: 'code', l: 'Номер закупки' });
+    cols.push({ id: 'firm', l: 'Фирма' });
+    cols.push({ id: 'org', l: 'Организация' });
+    cols.push({ id: 'item', l: 'Предмет закупки' });
+    cols.push({ id: 'qty', l: 'Кол-во' });
+    if (canSeePrice) { cols.push({ id: 'price', l: 'Цена' }); cols.push({ id: 'total', l: 'Сумма' }); }
+    cols.push({ id: 'location', l: 'Место поставки' });
+    cols.push({ id: 'deadline', l: 'Срок поставки' });
+    cols.push({ id: 'contract_number', l: '№ договора' });
+    cols.push({ id: 'signed_date', l: 'Дата подп.' });
+    cols.push({ id: 'delivery_date', l: 'Срок исп.' });
+    if (roleKey) cols.push({ id: 'status', l: 'Статус' });
+  }
+
+  let h = `<table><thead><tr>`;
+  cols.forEach(c => { h += `<th style="${c.w ? `min-width:${c.w}px` : ''}">${c.l}<div class="rzr"></div></th>`; });
+  h += `</tr></thead><tbody>`;
+
+  if (!rows.length) {
+    h += `<tr><td colspan="${cols.length}" class="td"><div class="nodata">Нет данных</div></td></tr>`;
+  }
+
+  const customFields = ls('kd_custom_fields', {});
+
+  rows.forEach((r, idx) => {
+    const expanded = expandedRows.has(r.id);
+    const costs = getCosts(r.id);
+    const costTot = costs.reduce((s, c) => s + Number(c.amount), 0);
+    const isHidden = !r.is_visible;
+    const isPaid = r.payment_status === 'paid';
+    const roleRestrict = rowRoleVisibility[r.id] || [];
+    const hasRestrict = roleRestrict.length > 0;
+
+    h += `<tr data-id="${r.id}"
+      draggable="${isAdmin ? 'true' : 'false'}"
+      ondragstart="onDS(event,'${r.id}')"
+      ondragend="onDE()"
+      ondragover="onDO(event,'${r.id}')"
+      ondrop="onDrop(event,'${r.id}')"
+      style="${isHidden && isAdmin ? 'opacity:0.5' : ''}">`;
+
+    cols.forEach(c => {
+      if (c.id === 'drag') {
+        h += `<td class="td" style="padding:9px 6px;width:24px">${isAdmin ? `<span class="dh" title="Перетащить">⠿</span>` : ''}</td>`;
+      } else if (c.id === 'num') {
+        h += `<td class="td" style="width:30px;color:#64748b;font-size:11px">${idx + 1}</td>`;
+      } else if (c.id === 'name' || c.id === 'org') {
+        h += `<td class="td" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500">${escOr(r.org)}</td>`;
+      } else if (c.id === 'code') {
+        h += `<td class="td" style="font-family:monospace;font-size:11px;white-space:nowrap">${escOr(r.code)}</td>`;
+      } else if (c.id === 'firm') {
+        h += `<td class="td"><span class="bdg bfirm">${escOr(r.firm)}</span></td>`;
+      } else if (c.id === 'region') {
+        const loc = r.location || '';
+        let region = '—';
+        if (loc.includes('Астана')) region = 'Астана';
+        else if (loc.includes('Алматы')) region = 'Алматы';
+        else if (loc.includes('Костанай')) region = 'Костанай';
+        else if (loc.includes('Павлодар')) region = 'Павлодар';
+        else if (loc.includes('Уральск') || loc.includes('ЗКО')) region = 'ЗКО';
+        else if (loc.includes('Атырау')) region = 'Атырау';
+        else if (loc) region = loc.substring(0,12);
+        h += `<td class="td" style="font-size:11px">${region}</td>`;
+      } else if (c.id === 'item') {
+        const hasSub = costs.length > 0 || getFiles(r.id).length > 0;
+        h += `<td class="td" style="max-width:200px">
+          <div style="display:flex;align-items:flex-start;gap:5px">
+            ${hasSub ? `<button onclick="toggleExp('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:12px;padding:0;flex-shrink:0;margin-top:1px">${expanded ? '▾' : '▸'}</button>` : '<span style="width:16px;flex-shrink:0"></span>'}
+            <div>
+              <div style="font-size:12px">${escOr(r.item)}</div>
+              ${r.comment ? `<div style="font-size:10px;color:#64748b;margin-top:2px">${esc(r.comment)}</div>` : ''}
+              ${costs.length > 0 && canSeePrice ? `<div style="font-size:10px;color:#00ff88;margin-top:1px">Затрат: ${fmtN(costTot)}</div>` : ''}
+            </div>
+          </div>
+        </td>`;
+      } else if (c.id === 'qty') {
+        h += `<td class="td" style="text-align:right;white-space:nowrap">${r.qty ? r.qty.toLocaleString('ru') : '—'}</td>`;
+      } else if (c.id === 'price') {
+        h += `<td class="td" style="text-align:right;white-space:nowrap;font-size:12px">${r.price ? fmtN(r.price) : '—'}</td>`;
+      } else if (c.id === 'total') {
+        h += `<td class="td" style="text-align:right;white-space:nowrap;font-weight:700;color:var(--accent)">${r.total ? fmtN(r.total) : '—'}</td>`;
+      } else if (c.id === 'location') {
+        h += `<td class="td" style="max-width:120px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escOr(r.location)}</td>`;
+      } else if (c.id === 'date' || c.id === 'signed_date') {
+        h += `<td class="td" style="font-size:11px;white-space:nowrap">${escOr(r.signed_date)}</td>`;
+      } else if (c.id === 'deadline' || c.id === 'delivery_date') {
+        h += `<td class="td" style="font-size:11px;white-space:nowrap">${r.deadline || r.delivery_date || '—'}</td>`;
+      } else if (c.id === 'contract_number') {
+        h += `<td class="td" style="font-size:11px;font-family:monospace">${escOr(r.contract_number)}</td>`;
+      } else if (c.id === 'paid' || c.id === 'payment') {
+        h += `<td class="td" onclick="${isAdmin ? `togglePay('${r.id}')` : ''}" style="${isAdmin ? 'cursor:pointer' : ''}">
+          <span class="bdg ${isPaid ? 'bg' : 'br'}">${isPaid ? '✅ Оплачен' : '❌ Не опл.'}</span>
+        </td>`;
+      } else if (c.id === 'comments') {
+        h += `<td class="td" style="vertical-align:top;min-width:160px"><div data-cmtcell="${r.id}">${commentCellHtml(r.id)}</div></td>`;
+      } else if (c.id === 'status') {
+        if (isAdmin) {
+          h += `<td class="td" style="min-width:120px"><div data-src="${r.id}">${statusCellHtml(r.id)}</div></td>`;
+        } else if (roleKey) {
+          h += `<td class="td">${statusSel(r.id, roleKey)}</td>`;
+        } else {
+          h += `<td class="td">—</td>`;
+        }
+      } else if (c.id === 'actions') {
+        h += `<td class="td" style="white-space:nowrap">
+          <button onclick="startEdit('${r.id}')" style="background:none;border:none;cursor:pointer;color:#64748b;font-size:13px;padding:2px 4px" title="Редактировать">✏️</button>
+          ${canDel ? `<button onclick="deleteRow('${r.id}')" style="background:none;border:none;cursor:pointer;color:#ff4757;font-size:13px;padding:2px 4px" title="Удалить">🗑️</button>` : ''}
+          ${isAdmin ? `<button onclick="toggleVisibility('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px" title="${hasRestrict ? 'Ограничен: '+roleRestrict.map(k=>ROLES[k]?.l||k).join(', ') : 'Видимость по ролям'}">${hasRestrict ? '🔒' : (isHidden ? '👁️‍🗨️' : '👁️')}</button>` : ''}
+        </td>`;
+      } else if (c.id.startsWith('custom_') || c.custom) {
+        const val = (customFields[r.id] || {})[c.id] || '';
+        h += `<td class="td" style="font-size:12px;min-width:${c.w||100}px">${isAdmin ? `<span onclick="editCustomField('${r.id}','${c.id}',this)" style="cursor:pointer;display:block;min-height:20px" title="Нажмите для редактирования">${val || '<span style=color:#64748b>—</span>'}</span>` : (val || '—')}</td>`;
+      } else {
+        const val = r[c.id];
+        h += `<td class="td" style="font-size:12px">${val !== undefined && val !== null && val !== '' ? val : '—'}</td>`;
+      }
+    });
+
+    h += `</tr>`;
+
+    if (expanded) {
+      h += `<tr class="xrow"><td colspan="${cols.length}" style="padding:0">
+        <div class="xpanel"><div class="xinner">
+          ${canCosts() ? costsHtml(r, true) : (costs.length ? costsHtml(r, false) : '')}
+          ${filesHtml(r.id, canManage(), canDelFile())}
+          ${r.phone ? `<div style="font-size:11px;color:#64748b;margin-top:8px">📞 ${esc(r.phone)}</div>` : ''}
+        </div></div>
+      </td></tr>`;
+    }
+  });
+
+  h += `</tbody></table>`;
+  return h;
+}
+
+function editCustomField(contractId, fieldId, el) {
+  const customFields = ls('kd_custom_fields', {});
+  const cur = (customFields[contractId] || {})[fieldId] || '';
+  const val = prompt('Значение:', cur);
+  if (val === null) return;
+  if (!customFields[contractId]) customFields[contractId] = {};
+  customFields[contractId][fieldId] = val.trim();
+  lsw('kd_custom_fields', customFields);
+  el.innerHTML = val.trim() || '<span style="color:#64748b">—</span>';
+}
